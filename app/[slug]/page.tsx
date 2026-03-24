@@ -5,7 +5,6 @@ import LandingPage from '@/components/landing/LandingPage'
 import type { PortfolioWithContent } from '@/lib/supabase/types'
 
 interface Props { params: Promise<{ slug: string }> }
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createClient()
@@ -14,17 +13,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .select('title, description, accent_color, noindex')
     .eq('slug', slug)
     .eq('status', 'published')
-    .single()
+    .maybeSingle()
 
   if (!data) return { title: 'Portfolio non trovato' }
 
+  const portfolio = data as {
+    title: string
+    description: string | null
+    accent_color: string
+    noindex: boolean
+  }
+
   return {
-    title: `${data.title} — ScoreForge`,
-    description: data.description ?? undefined,
-    robots: data.noindex ? 'noindex, nofollow' : 'index, follow',
+    title: `${portfolio.title} — ScoreForge`,
+    description: portfolio.description ?? undefined,
+    robots: portfolio.noindex ? 'noindex, nofollow' : 'index, follow',
     openGraph: {
-      title: data.title,
-      description: data.description ?? undefined,
+      title: portfolio.title,
+      description: portfolio.description ?? undefined,
       type: 'website',
     },
   }
