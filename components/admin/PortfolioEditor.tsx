@@ -85,21 +85,15 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
         )
       }
 
-      // Salva tracce: delete + reinsert (come i progetti)
-await supabase.from('tracks').delete().eq('portfolio_id', portfolioId!)
-if (tracks.length) {
-  await supabase.from('tracks').insert(
-    tracks.map((t, i) => ({
-      portfolio_id: portfolioId!,
-      title: t.title,
-      genre: t.genre,
-      duration_label: t.duration_label,
-      file_url: t.file_url ?? null,
-      waveform_data: t.waveform_data ?? null,
-      sort_order: i,
-    }))
-  )
-}
+      // Salva tracce: aggiorna solo i metadati (il file_url viene gestito dall'uploader)
+      for (let i = 0; i < tracks.length; i++) {
+        const t = tracks[i]
+        if (t.id) {
+          await supabase.from('tracks').update({ title: t.title, genre: t.genre, duration_label: t.duration_label, sort_order: i }).eq('id', t.id)
+        } else {
+          await supabase.from('tracks').insert({ portfolio_id: portfolioId!, title: t.title, genre: t.genre, duration_label: t.duration_label, sort_order: i })
+        }
+      }
 
       toast.success('Portfolio salvato!')
       router.push('/portfolios')
@@ -245,14 +239,52 @@ if (tracks.length) {
                   <label className="field-label mb-0">Progetti</label>
                   <button onClick={addProject} className="btn btn-outline btn-sm"><Plus size={12} /> Aggiungi</button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {projects.length === 0 && <p className="text-sm text-[#5a5548] py-2">Nessun progetto. Aggiungine uno!</p>}
                   {projects.map((p, i) => (
-                    <div key={i} className="flex gap-2 bg-[#17171f] border border-[#2a2830] rounded-lg px-3 py-2">
-                      <input className="w-10 bg-transparent text-center text-base outline-none" value={p.emoji} onChange={e => updateProject(i, 'emoji', e.target.value)} />
-                      <input className="flex-1 bg-transparent text-sm text-[#f0ebe0] outline-none" value={p.title} onChange={e => updateProject(i, 'title', e.target.value)} placeholder="Titolo progetto" />
-                      <input className="w-36 bg-transparent text-xs text-[#5a5548] font-mono outline-none" value={p.project_type ?? ''} onChange={e => updateProject(i, 'project_type', e.target.value)} placeholder="Tipo" />
-                      <button onClick={() => removeProject(i)} className="text-[#5a5548] hover:text-[#c94b4b] transition-colors"><X size={14} /></button>
+                    <div key={i} className="bg-[#17171f] border border-[#2a2830] rounded-xl overflow-hidden">
+                      <div className="flex gap-3 items-start p-3">
+                        <div className="flex-shrink-0">
+                          <label className="cursor-pointer block group relative">
+                            <input type="file" accept="image/*" className="hidden"
+                              onChange={async e => {
+                                const file = e.target.files?.[0]
+                                if (!file) return
+                                const path = `${userId}/projects/${Date.now()}-${file.name}`
+                                const { data, error } = await supabase.storage.from('scoreforge-media').upload(path, file, { upsert: true })
+                                if (error) { toast.error('Errore upload copertina'); return }
+                                const { data: urlData } = supabase.storage.from('scoreforge-media').getPublicUrl(data.path)
+                                updateProject(i, 'cover_url', urlData.publicUrl)
+                                toast.success('Copertina caricata!')
+                              }}
+                            />
+                            {p.cover_url ? (
+                              <div className="relative w-16 h-16">
+                                <img src={p.cover_url} alt="" className="w-16 h-16 object-cover rounded-lg border border-[#2a2830]" />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                  <span className="text-white text-xs">Cambia</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="w-16 h-16 rounded-lg border border-dashed border-[#3a3648] bg-[#09090f] flex flex-col items-center justify-center gap-1 hover:border-[#c8a45a]/50 transition-colors">
+                                <span className="text-xl">{p.emoji}</span>
+                                <span className="text-[8px] text-[#5a5548] font-mono">+ foto</span>
+                              </div>
+                            )}
+                          </label>
+                        </div>
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                          <input className="w-full bg-transparent text-sm text-[#f0ebe0] outline-none border-b border-[#2a2830] pb-1 focus:border-[#c8a45a] transition-colors" value={p.title} onChange={e => updateProject(i, 'title', e.target.value)} placeholder="Titolo progetto" />
+                          <div className="flex gap-2">
+                            <input className="w-10 bg-transparent text-center text-base outline-none" value={p.emoji} onChange={e => updateProject(i, 'emoji', e.target.value)} title="Emoji" />
+                            <input className="flex-1 bg-transparent text-xs text-[#5a5548] font-mono outline-none" value={p.project_type ?? ''} onChange={e => updateProject(i, 'project_type', e.target.value)} placeholder="Tipo (es. Cortometraggio)" />
+                          </div>
+                          <input className="w-full bg-transparent text-xs text-[#5a5548] outline-none" value={p.description ?? ''} onChange={e => updateProject(i, 'description', e.target.value)} placeholder="Breve descrizione (opzionale)" />
+                        </div>
+                        <button onClick={() => removeProject(i)} className="text-[#5a5548] hover:text-[#c94b4b] transition-colors flex-shrink-0 mt-0.5">
+                          <X size={14} />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
