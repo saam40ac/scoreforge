@@ -2,35 +2,33 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import LandingPage from '@/components/landing/LandingPage'
-import type { PortfolioWithContent } from '@/lib/supabase/types'
+import type { PortfolioWithContent, Portfolio, Project, Track } from '@/lib/supabase/types'
 
 interface Props { params: Promise<{ slug: string }> }
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createClient()
   const { data } = await supabase
     .from('portfolios')
-    .select('title, description, accent_color, noindex')
+    .select('title, description, noindex')
     .eq('slug', slug)
     .eq('status', 'published')
     .maybeSingle()
 
   if (!data) return { title: 'Portfolio non trovato' }
 
-  const portfolio = data as {
-    title: string
-    description: string | null
-    accent_color: string
-    noindex: boolean
-  }
+  const title       = (data as unknown as Portfolio).title
+  const description = (data as unknown as Portfolio).description
+  const noindex     = (data as unknown as Portfolio).noindex
 
   return {
-    title: `${portfolio.title} — ScoreForge`,
-    description: portfolio.description ?? undefined,
-    robots: portfolio.noindex ? 'noindex, nofollow' : 'index, follow',
+    title: `${title} — ScoreForge`,
+    description: description ?? undefined,
+    robots: noindex ? 'noindex, nofollow' : 'index, follow',
     openGraph: {
-      title: portfolio.title,
-      description: portfolio.description ?? undefined,
+      title,
+      description: description ?? undefined,
       type: 'website',
     },
   }
@@ -40,22 +38,31 @@ export default async function PublicPortfolioPage({ params }: Props) {
   const { slug } = await params
   const supabase = await createClient()
 
-  // Carica portfolio pubblico con relazioni
-  const { data: portfolio } = await supabase
+  const { data } = await supabase
     .from('portfolios')
     .select('*, projects(*), tracks(*)')
     .eq('slug', slug)
     .eq('status', 'published')
-    .single()
+    .maybeSingle()
 
-  if (!portfolio) notFound()
+  if (!data) notFound()
+
+  const portfolio = data as unknown as PortfolioWithContent
 
   // Incrementa view count (fire and forget)
-  supabase.from('portfolios').update({ view_count: portfolio.view_count + 1 }).eq('id', portfolio.id).then(() => {})
+  supabase
+    .from('portfolios')
+    .update({ view_count: (portfolio.view_count ?? 0) + 1 })
+    .eq('id', portfolio.id)
+    .then(() => {})
 
-  // Ordina
-  portfolio.projects = portfolio.projects?.sort((a: {sort_order:number}, b: {sort_order:number}) => a.sort_order - b.sort_order) ?? []
-  portfolio.tracks   = portfolio.tracks?.sort((a: {sort_order:number}, b: {sort_order:number}) => a.sort_order - b.sort_order) ?? []
+  // Ordina per sort_order
+  portfolio.projects = ((portfolio.projects ?? []) as Project[]).sort(
+    (a, b) => a.sort_order - b.sort_order
+  )
+  portfolio.tracks = ((portfolio.tracks ?? []) as Track[]).sort(
+    (a, b) => a.sort_order - b.sort_order
+  )
 
-  return <LandingPage portfolio={portfolio as PortfolioWithContent} />
+  return <LandingPage portfolio={portfolio} />
 }
