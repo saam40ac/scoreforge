@@ -17,14 +17,14 @@ const THEMES = {
 }
 
 // ── Modale contatto ───────────────────────────────────────────
-function ContactModal({ open, onClose, accentColor, T, email, name }: {
+function ContactModal({ open, onClose, accentColor, T, email }: {
   open: boolean; onClose: () => void; accentColor: string
-  T: typeof THEMES.dark; email: string; name: string
+  T: typeof THEMES.dark; email: string
 }) {
-  const [from,    setFrom]    = useState('')
-  const [fromMail,setFromMail]= useState('')
-  const [message, setMessage] = useState('')
-  const [sent,    setSent]    = useState(false)
+  const [from,     setFrom]     = useState('')
+  const [fromMail, setFromMail] = useState('')
+  const [message,  setMessage]  = useState('')
+  const [sent,     setSent]     = useState(false)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -44,7 +44,6 @@ function ContactModal({ open, onClose, accentColor, T, email, name }: {
           <div style={{ textAlign:'center', padding:'24px 0' }}>
             <div style={{ fontSize:'36px', marginBottom:'12px' }}>✓</div>
             <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'22px', color:T.text }}>Messaggio inviato!</div>
-            <div style={{ fontSize:'13px', color:T.text3, marginTop:'6px' }}>Il client email si è aperto con il tuo messaggio.</div>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
@@ -82,46 +81,46 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
   const ac = portfolio.accent_color || '#c8a45a'
   const [contactOpen, setContactOpen] = useState(false)
 
-  const name    = profile.name    || 'Artista'
-  const email   = profile.public_email || ''
-  const website = profile.website || ''
+  const name     = profile.name         || 'Artista'
+  const email    = profile.public_email || ''
+  const website  = profile.website      || ''
   const initials = name.split(' ').map((n:string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   const hasVideo = !!portfolio.video_url?.includes('youtube.com/embed') || !!portfolio.video_url?.includes('vimeo.com')
 
-  const sec  = { padding:'40px 28px', borderBottom:`1px solid ${T.border}`, background:T.bg }
-  const tag  = { fontSize:'9.5px', letterSpacing:'.2em', textTransform:'uppercase' as const, fontFamily:'DM Mono,monospace', color:ac, marginBottom:'10px', opacity:.85 }
-  const h2s  = { fontFamily:"'Cormorant Garamond',serif", fontSize:'27px', fontWeight:400, marginBottom:'12px', color:T.text, lineHeight:1.1 }
-  const body = { fontSize:'14px', lineHeight:1.85, color:T.text2 }
+  // ── Stili comuni ─────────────────────────────────────────────
+  // Wrapper centrato con max-width e padding laterale generoso
+  const wrap: React.CSSProperties = {
+    maxWidth: '860px',
+    margin: '0 auto',
+    padding: '0 clamp(20px, 5vw, 60px)',
+  }
+  const sec:  React.CSSProperties = { padding:'48px 0', borderBottom:`1px solid ${T.border}`, background:T.bg }
+  const tag:  React.CSSProperties = { fontSize:'9.5px', letterSpacing:'.2em', textTransform:'uppercase', fontFamily:'DM Mono,monospace', color:ac, marginBottom:'10px', opacity:.85 }
+  const h2s:  React.CSSProperties = { fontFamily:"'Cormorant Garamond',serif", fontSize:'27px', fontWeight:400, marginBottom:'12px', color:T.text, lineHeight:1.1 }
+  const body: React.CSSProperties = { fontSize:'14px', lineHeight:1.85, color:T.text2 }
 
   return (
     <>
-      <ContactModal open={contactOpen} onClose={()=>setContactOpen(false)} accentColor={ac} T={T} email={email} name={name} />
+      <ContactModal open={contactOpen} onClose={()=>setContactOpen(false)} accentColor={ac} T={T} email={email} />
 
       <div style={{ background:T.bg, color:T.text, fontFamily:"'Outfit',sans-serif", minHeight:'100vh' }}>
 
         {/* ── HEADER ── */}
-        <div style={{ background:T.bg2, borderBottom:`1px solid ${T.border}`, padding:'0 28px' }}>
-          <div style={{ maxWidth:'820px', margin:'0 auto', display:'flex', alignItems:'center', gap:'16px', padding:'16px 0' }}>
-
-            {/* Avatar: foto se presente, altrimenti iniziali */}
+        <div style={{ background:T.bg2, borderBottom:`1px solid ${T.border}` }}>
+          <div style={{ ...wrap, display:'flex', alignItems:'center', gap:'16px', padding:`16px clamp(20px,5vw,60px)` }}>
             {profile.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt={name}
-                style={{ width:'52px', height:'52px', borderRadius:'50%', objectFit:'cover', flexShrink:0, border:`2px solid ${ac}40` }}
-              />
+              <img src={profile.avatar_url} alt={name}
+                style={{ width:'52px', height:'52px', borderRadius:'50%', objectFit:'cover', flexShrink:0, border:`2px solid ${ac}40` }} />
             ) : (
               <div style={{ width:'52px', height:'52px', borderRadius:'50%', background:`linear-gradient(135deg,${ac},${ac}99)`, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Cormorant Garamond',serif", fontSize:'19px', fontWeight:600, color:'#09090f', flexShrink:0, border:`2px solid ${ac}40` }}>
                 {initials}
               </div>
             )}
-
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'18px', fontWeight:400, color:T.text }}>{name}</div>
               <div style={{ fontSize:'11px', color:T.text3, fontFamily:'DM Mono,monospace', marginTop:'2px' }}>Compositore · Musica Originale</div>
             </div>
-
             <div style={{ display:'flex', gap:'8px', flexShrink:0 }}>
               {email && (
                 <button onClick={()=>setContactOpen(true)} style={{ padding:'8px 18px', borderRadius:'6px', background:ac, color:'#09090f', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'Outfit,sans-serif' }}>
@@ -139,120 +138,172 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
         </div>
 
         {/* ── HERO ── */}
-        <div style={{ minHeight:'300px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', textAlign:'center', padding:'52px 24px 44px', position:'relative', overflow:'hidden' }}>
+        <div style={{ background:T.bg, padding:'56px 0 48px', position:'relative', overflow:'hidden' }}>
           <div style={{ position:'absolute', inset:0, background:`radial-gradient(ellipse at 50% 0%,${ac}0a,transparent 65%)` }} />
-          <div style={{ ...tag, position:'relative' }}>Portfolio · {portfolio.target || 'Musica Originale'}</div>
-          <h1 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(28px,5vw,54px)', fontWeight:300, lineHeight:1.06, marginBottom:'16px', position:'relative', color:T.text }}>
-            {portfolio.title}
-          </h1>
-          <div style={{ height:'1px', width:'44px', background:ac, margin:'0 auto 16px' }} />
-          <p style={{ ...body, maxWidth:'440px', margin:'0 auto 28px', position:'relative' }}>{portfolio.description}</p>
-          <div style={{ display:'flex', gap:'10px', justifyContent:'center', flexWrap:'wrap', position:'relative' }}>
-            {portfolio.tracks.length > 0 && (
-              <button style={{ padding:'11px 26px', borderRadius:'6px', fontSize:'14px', fontWeight:500, cursor:'pointer', border:'none', background:ac, color:'#09090f', fontFamily:'Outfit,sans-serif' }}
-                onClick={()=>document.getElementById('sf-audio')?.scrollIntoView({behavior:'smooth'})}>
-                ▶ Ascolta
-              </button>
-            )}
-            {email && (
-              <button style={{ padding:'11px 24px', borderRadius:'6px', fontSize:'14px', fontWeight:500, cursor:'pointer', background:'transparent', color:T.text2, border:`1px solid ${T.border}`, fontFamily:'Outfit,sans-serif' }}
-                onClick={()=>setContactOpen(true)}>
-                Scrivimi
-              </button>
-            )}
+          <div style={{ ...wrap, textAlign:'center', position:'relative' }}>
+            <div style={tag}>Portfolio · {portfolio.target || 'Musica Originale'}</div>
+            <h1 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(28px,5vw,58px)', fontWeight:300, lineHeight:1.06, marginBottom:'16px', color:T.text }}>
+              {portfolio.title}
+            </h1>
+            <div style={{ height:'1px', width:'44px', background:ac, margin:'0 auto 16px' }} />
+            <p style={{ ...body, maxWidth:'480px', margin:'0 auto 28px' }}>{portfolio.description}</p>
+            <div style={{ display:'flex', gap:'10px', justifyContent:'center', flexWrap:'wrap' }}>
+              {portfolio.tracks.length > 0 && (
+                <button style={{ padding:'11px 26px', borderRadius:'6px', fontSize:'14px', fontWeight:500, cursor:'pointer', border:'none', background:ac, color:'#09090f', fontFamily:'Outfit,sans-serif' }}
+                  onClick={()=>document.getElementById('sf-audio')?.scrollIntoView({behavior:'smooth'})}>
+                  ▶ Ascolta
+                </button>
+              )}
+              {email && (
+                <button style={{ padding:'11px 24px', borderRadius:'6px', fontSize:'14px', fontWeight:500, cursor:'pointer', background:'transparent', color:T.text2, border:`1px solid ${T.border}`, fontFamily:'Outfit,sans-serif' }}
+                  onClick={()=>setContactOpen(true)}>
+                  Scrivimi
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* ── BIO ── */}
+        {/* ── BIO con foto artista ── */}
         {portfolio.bio && (
-          <div style={sec}>
-            <div style={tag}>Chi sono</div>
-            <h2 style={h2s}>{name}</h2>
-            <p style={body}>{portfolio.bio}</p>
+          <div style={{ ...sec }}>
+            <div style={wrap}>
+              <div style={tag}>Chi sono</div>
+              {/* Layout: foto a sinistra + testo a destra su desktop, impilato su mobile */}
+              <div style={{ display:'flex', gap:'32px', alignItems:'flex-start', flexWrap:'wrap' }}>
+                {/* Foto artista */}
+                {profile.avatar_url && (
+                  <div style={{ flexShrink:0 }}>
+                    <img
+                      src={profile.avatar_url}
+                      alt={name}
+                      style={{
+                        width: 'clamp(120px, 20vw, 200px)',
+                        height: 'clamp(140px, 24vw, 240px)',
+                        objectFit: 'cover',
+                        borderRadius: '12px',
+                        border: `1px solid ${T.border}`,
+                        display: 'block',
+                      }}
+                    />
+                  </div>
+                )}
+                {/* Testo bio */}
+                <div style={{ flex:1, minWidth:'200px' }}>
+                  <h2 style={h2s}>{name}</h2>
+                  <p style={body}>{portfolio.bio}</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* ── PROGETTI ── */}
+        {/* ── PROGETTI con copertine ── */}
         {portfolio.projects.length > 0 && (
-          <div style={sec}>
-            <div style={tag}>Lavori selezionati</div>
-            <h2 style={h2s}>Progetti</h2>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(155px,1fr))', gap:'12px', marginTop:'16px' }}>
-              {portfolio.projects.map(p => (
-                <div key={p.id} style={{ borderRadius:'10px', overflow:'hidden', border:`1px solid ${T.border}`, background:T.bg2 }}>
-                  <div style={{ height:'85px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'28px', opacity:.55, background:T.bg3 }}>{p.emoji}</div>
-                  <div style={{ padding:'9px 11px' }}>
-                    <div style={{ fontSize:'13px', fontWeight:500, marginBottom:'3px', color:T.text }}>{p.title}</div>
-                    <div style={{ fontSize:'10.5px', fontFamily:'DM Mono,monospace', color:ac }}>{p.project_type}</div>
+          <div style={{ ...sec }}>
+            <div style={wrap}>
+              <div style={tag}>Lavori selezionati</div>
+              <h2 style={h2s}>Progetti</h2>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:'16px', marginTop:'16px' }}>
+                {portfolio.projects.map(p => (
+                  <div key={p.id} style={{ borderRadius:'12px', overflow:'hidden', border:`1px solid ${T.border}`, background:T.bg2, transition:'transform .2s' }}
+                    onMouseEnter={e=>(e.currentTarget.style.transform='translateY(-3px)')}
+                    onMouseLeave={e=>(e.currentTarget.style.transform='translateY(0)')}>
+                    {/* Copertina: immagine reale se presente, altrimenti sfondo colorato con emoji */}
+                    {p.cover_url ? (
+                      <img
+                        src={p.cover_url}
+                        alt={p.title}
+                        style={{ width:'100%', height:'120px', objectFit:'cover', display:'block' }}
+                      />
+                    ) : (
+                      <div style={{ height:'120px', display:'flex', alignItems:'center', justifyContent:'center', background:`linear-gradient(135deg,${T.bg3},${ac}18)`, position:'relative' }}>
+                        <span style={{ fontSize:'36px', opacity:.6 }}>{p.emoji}</span>
+                        <div style={{ position:'absolute', inset:0, background:`linear-gradient(to bottom,transparent 50%,${T.bg2}dd)` }} />
+                      </div>
+                    )}
+                    <div style={{ padding:'10px 13px 13px' }}>
+                      <div style={{ fontSize:'13.5px', fontWeight:500, marginBottom:'4px', color:T.text }}>{p.title}</div>
+                      <div style={{ fontSize:'10.5px', fontFamily:'DM Mono,monospace', color:ac }}>{p.project_type}</div>
+                      {p.description && (
+                        <div style={{ fontSize:'12px', color:T.text3, marginTop:'6px', lineHeight:1.5 }}>{p.description}</div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
 
         {/* ── AUDIO ── */}
         {portfolio.tracks.length > 0 && (
-          <div id="sf-audio" style={sec}>
-            <div style={tag}>Composizioni</div>
-            <h2 style={h2s}>Ascolta il mio lavoro</h2>
-            <div style={{ display:'flex', flexDirection:'column', gap:'8px', marginTop:'14px' }}>
-              {portfolio.tracks.map(t => (
-                <AudioPlayer key={t.id} track={t} accentColor={ac} theme={portfolio.theme as 'dark'|'ivory'|'neon'} />
-              ))}
+          <div id="sf-audio" style={{ ...sec }}>
+            <div style={wrap}>
+              <div style={tag}>Composizioni</div>
+              <h2 style={h2s}>Ascolta il mio lavoro</h2>
+              <div style={{ display:'flex', flexDirection:'column', gap:'8px', marginTop:'14px' }}>
+                {portfolio.tracks.map(t => (
+                  <AudioPlayer key={t.id} track={t} accentColor={ac} theme={portfolio.theme as 'dark'|'ivory'|'neon'} />
+                ))}
+              </div>
             </div>
           </div>
         )}
 
         {/* ── VIDEO ── */}
         {hasVideo && (
-          <div style={sec}>
-            <div style={tag}>Video</div>
-            <h2 style={h2s}>Showreel</h2>
-            <div style={{ position:'relative', paddingBottom:'56.25%', height:0, overflow:'hidden', borderRadius:'10px', marginTop:'14px', background:T.bg3 }}>
-              {preview ? (
-                <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'10px', cursor:'pointer' }}
-                  onClick={()=>window.open(portfolio.video_url?.replace('/embed/','/watch?v=') ?? '','_blank')}>
-                  <div style={{ width:'56px', height:'56px', borderRadius:'50%', border:`2px solid ${ac}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px', color:ac }}>▶</div>
-                  <div style={{ fontSize:'13px', color:T.text2 }}>Clicca per riprodurre</div>
-                </div>
-              ) : (
-                <iframe src={portfolio.video_url!} allow="autoplay;encrypted-media" allowFullScreen
-                  style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:0, borderRadius:'10px' }} />
-              )}
+          <div style={{ ...sec }}>
+            <div style={wrap}>
+              <div style={tag}>Video</div>
+              <h2 style={h2s}>Showreel</h2>
+              <div style={{ position:'relative', paddingBottom:'56.25%', height:0, overflow:'hidden', borderRadius:'12px', marginTop:'14px', background:T.bg3 }}>
+                {preview ? (
+                  <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'10px', cursor:'pointer' }}
+                    onClick={()=>window.open(portfolio.video_url?.replace('/embed/','/watch?v=') ?? '','_blank')}>
+                    <div style={{ width:'60px', height:'60px', borderRadius:'50%', border:`2px solid ${ac}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', color:ac }}>▶</div>
+                    <div style={{ fontSize:'13px', color:T.text2 }}>Clicca per riprodurre</div>
+                  </div>
+                ) : (
+                  <iframe src={portfolio.video_url!} allow="autoplay;encrypted-media" allowFullScreen
+                    style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:0, borderRadius:'12px' }} />
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {/* ── CONTATTI ── */}
         {email && (
-          <div id="sf-contact" style={{ padding:'50px 28px', textAlign:'center', background:T.bg }}>
-            <div style={tag}>Lavoriamo insieme</div>
-            <h2 style={{ ...h2s, textAlign:'center' }}>Contattami</h2>
-            <p style={{ ...body, maxWidth:'400px', margin:'0 auto 28px' }}>
-              Disponibile per nuovi progetti cinematografici, musicali e teatrali. Scrivimi per discutere la tua visione.
-            </p>
-            <button onClick={()=>setContactOpen(true)}
-              style={{ display:'inline-flex', alignItems:'center', gap:'8px', padding:'13px 32px', borderRadius:'8px', background:ac, color:'#09090f', border:'none', fontSize:'15px', fontWeight:600, cursor:'pointer', fontFamily:'Outfit,sans-serif', marginBottom:'20px' }}>
-              ✉ Invia un messaggio
-            </button>
-            <div style={{ display:'flex', gap:'10px', justifyContent:'center', flexWrap:'wrap' }}>
-              <a href={`mailto:${email}`}
-                style={{ padding:'8px 18px', borderRadius:'6px', fontSize:'13px', background:'transparent', color:T.text2, border:`1px solid ${T.border}`, fontFamily:'Outfit,sans-serif', textDecoration:'none' }}>
-                ✉ {email}
-              </a>
-              {website && (
-                <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noopener noreferrer"
+          <div id="sf-contact" style={{ background:T.bg, padding:'56px 0' }}>
+            <div style={{ ...wrap, textAlign:'center' }}>
+              <div style={tag}>Lavoriamo insieme</div>
+              <h2 style={{ ...h2s, textAlign:'center' }}>Contattami</h2>
+              <p style={{ ...body, maxWidth:'420px', margin:'0 auto 28px' }}>
+                Disponibile per nuovi progetti cinematografici, musicali e teatrali. Scrivimi per discutere la tua visione.
+              </p>
+              <button onClick={()=>setContactOpen(true)}
+                style={{ display:'inline-flex', alignItems:'center', gap:'8px', padding:'13px 32px', borderRadius:'8px', background:ac, color:'#09090f', border:'none', fontSize:'15px', fontWeight:600, cursor:'pointer', fontFamily:'Outfit,sans-serif', marginBottom:'20px' }}>
+                ✉ Invia un messaggio
+              </button>
+              <div style={{ display:'flex', gap:'10px', justifyContent:'center', flexWrap:'wrap' }}>
+                <a href={`mailto:${email}`}
                   style={{ padding:'8px 18px', borderRadius:'6px', fontSize:'13px', background:'transparent', color:T.text2, border:`1px solid ${T.border}`, fontFamily:'Outfit,sans-serif', textDecoration:'none' }}>
-                  🌐 {website}
+                  ✉ {email}
                 </a>
-              )}
+                {website && (
+                  <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noopener noreferrer"
+                    style={{ padding:'8px 18px', borderRadius:'6px', fontSize:'13px', background:'transparent', color:T.text2, border:`1px solid ${T.border}`, fontFamily:'Outfit,sans-serif', textDecoration:'none' }}>
+                    🌐 {website}
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {/* ── FOOTER ── */}
-        <div style={{ padding:'16px 28px', textAlign:'center', fontSize:'10.5px', fontFamily:'DM Mono,monospace', color:T.text3, borderTop:`1px solid ${T.border}`, background:T.bg }}>
+        <div style={{ padding:'18px clamp(20px,5vw,60px)', textAlign:'center', fontSize:'10.5px', fontFamily:'DM Mono,monospace', color:T.text3, borderTop:`1px solid ${T.border}`, background:T.bg }}>
           © {new Date().getFullYear()} {name} · Powered by ScoreForge
         </div>
 
