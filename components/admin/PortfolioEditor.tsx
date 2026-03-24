@@ -85,15 +85,21 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
         )
       }
 
-      // Salva tracce: aggiorna solo i metadati (il file_url viene gestito dall'uploader)
-      for (let i = 0; i < tracks.length; i++) {
-        const t = tracks[i]
-        if (t.id) {
-          await supabase.from('tracks').update({ title: t.title, genre: t.genre, duration_label: t.duration_label, sort_order: i }).eq('id', t.id)
-        } else {
-          await supabase.from('tracks').insert({ portfolio_id: portfolioId!, title: t.title, genre: t.genre, duration_label: t.duration_label, sort_order: i })
-        }
-      }
+      // Salva tracce: delete + reinsert (come i progetti)
+await supabase.from('tracks').delete().eq('portfolio_id', portfolioId!)
+if (tracks.length) {
+  await supabase.from('tracks').insert(
+    tracks.map((t, i) => ({
+      portfolio_id: portfolioId!,
+      title: t.title,
+      genre: t.genre,
+      duration_label: t.duration_label,
+      file_url: t.file_url ?? null,
+      waveform_data: t.waveform_data ?? null,
+      sort_order: i,
+    }))
+  )
+}
 
       toast.success('Portfolio salvato!')
       router.push('/portfolios')
