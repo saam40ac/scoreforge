@@ -18,17 +18,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!data) return { title: 'Portfolio non trovato' }
 
-  const title       = (data as unknown as Portfolio).title
-  const description = (data as unknown as Portfolio).description
-  const noindex     = (data as unknown as Portfolio).noindex
+  const p = data as unknown as Portfolio
 
   return {
-    title: `${title} — ScoreForge`,
-    description: description ?? undefined,
-    robots: noindex ? 'noindex, nofollow' : 'index, follow',
+    title: `${p.title} — ScoreForge`,
+    description: p.description ?? undefined,
+    robots: p.noindex ? 'noindex, nofollow' : 'index, follow',
     openGraph: {
-      title,
-      description: description ?? undefined,
+      title: p.title,
+      description: p.description ?? undefined,
       type: 'website',
     },
   }
@@ -49,14 +47,6 @@ export default async function PublicPortfolioPage({ params }: Props) {
 
   const portfolio = data as unknown as PortfolioWithContent
 
-  // Incrementa view count (fire and forget)
-  supabase
-    .from('portfolios')
-    .update({ view_count: (portfolio.view_count ?? 0) + 1 })
-    .eq('id', portfolio.id)
-    .then(() => {})
-
-  // Ordina per sort_order
   portfolio.projects = ((portfolio.projects ?? []) as Project[]).sort(
     (a, b) => a.sort_order - b.sort_order
   )
