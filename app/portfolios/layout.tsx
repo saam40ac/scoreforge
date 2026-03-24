@@ -6,9 +6,20 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
-  const { data: profile } = await supabase.from('profiles').select('name, public_email').eq('id', user.id).single()
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('name, public_email')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const profile = data as { name: string; public_email: string } | null
+
   return (
-    <AdminShell userName={profile?.name || user.email?.split('@')[0] || 'Artista'} userEmail={profile?.public_email || user.email || ''}>
+    <AdminShell
+      userName={profile?.name || user.email?.split('@')[0] || 'Artista'}
+      userEmail={profile?.public_email || user.email || ''}
+    >
       {children}
     </AdminShell>
   )
