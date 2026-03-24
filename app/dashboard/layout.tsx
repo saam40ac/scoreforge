@@ -5,14 +5,15 @@ import AdminShell from '@/components/admin/AdminShell'
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data } = await supabase
     .from('profiles')
     .select('name, public_email')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
+
+  const profile = data as { name: string; public_email: string } | null
 
   return (
     <AdminShell
