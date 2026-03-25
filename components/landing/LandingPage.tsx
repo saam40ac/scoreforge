@@ -94,9 +94,9 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
   // ── Stili comuni ─────────────────────────────────────────────
   // Wrapper centrato con max-width e padding laterale generoso
   const wrap: React.CSSProperties = {
-    maxWidth: '860px',
+    maxWidth: '1080px',
     margin: '0 auto',
-    padding: '0 clamp(20px, 5vw, 60px)',
+    padding: '0 clamp(16px, 3vw, 40px)',
   }
   const sec:  React.CSSProperties = { padding:'48px 0', borderBottom:`1px solid ${T.border}`, background:T.bg }
   const tag:  React.CSSProperties = { fontSize:'9.5px', letterSpacing:'.2em', textTransform:'uppercase', fontFamily:'DM Mono,monospace', color:ac, marginBottom:'10px', opacity:.85 }
@@ -111,7 +111,7 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
 
         {/* ── HEADER ── */}
         <div style={{ background:T.bg2, borderBottom:`1px solid ${T.border}` }}>
-          <div style={{ ...wrap, display:'flex', alignItems:'center', gap:'16px', padding:`16px clamp(20px,5vw,60px)` }}>
+          <div style={{ ...wrap, display:'flex', alignItems:'center', gap:'16px', padding:`14px clamp(16px,3vw,40px)` }}>
             {profile.avatar_url ? (
               <img src={profile.avatar_url} alt={name}
                 style={{ width:'52px', height:'52px', borderRadius:'50%', objectFit:'cover', flexShrink:0, border:`2px solid ${ac}40` }} />
@@ -254,33 +254,55 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
           </div>
         )}
 
-        {/* ── VIDEO (multipli) ── */}
+        {/* ── VIDEO (multipli, griglia 2 col su desktop) ── */}
         {allVideos.length > 0 && (
           <div style={{ ...sec }}>
             <div style={wrap}>
               <div style={tag}>Video</div>
               <h2 style={h2s}>Showreel</h2>
-              <div style={{ display:'flex', flexDirection:'column', gap:'16px', marginTop:'14px' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: allVideos.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
+                gap: '16px',
+                marginTop: '14px',
+              }}>
                 {allVideos.map((vUrl, vi) => {
                   const isEmbed = vUrl.includes('youtube') || vUrl.includes('vimeo')
                   return (
-                    <div key={vi} style={{ position:'relative', paddingBottom:'56.25%', height:0, overflow:'hidden', borderRadius:'12px', background:T.bg3 }}>
-                      {isEmbed ? (
-                        preview ? (
-                          <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'10px', cursor:'pointer' }}
-                            onClick={()=>window.open(vUrl.replace('/embed/','/watch?v='),'_blank')}>
-                            <div style={{ width:'60px', height:'60px', borderRadius:'50%', border:`2px solid ${ac}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', color:ac }}>▶</div>
-                            <div style={{ fontSize:'13px', color:T.text2 }}>Clicca per riprodurre</div>
-                          </div>
-                        ) : (
-                          <iframe src={vUrl} allow="autoplay;encrypted-media" allowFullScreen
-                            style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:0, borderRadius:'12px' }} />
-                        )
-                      ) : (
-                        <video controls style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', borderRadius:'12px', background:'#000' }}>
-                          <source src={vUrl} />
-                        </video>
+                    <div key={vi}>
+                      {/* Etichetta video se più di uno */}
+                      {allVideos.length > 1 && (
+                        <div style={{ fontSize:'10px', fontFamily:'DM Mono,monospace', color:T.text3, marginBottom:'6px', letterSpacing:'.08em' }}>
+                          {vi === 0 ? 'Video principale' : `Video ${vi + 1}`}
+                        </div>
                       )}
+                      <div style={{ position:'relative', paddingBottom:'56.25%', height:0, overflow:'hidden', borderRadius:'12px', background:T.bg3 }}>
+                        {isEmbed ? (
+                          preview ? (
+                            <div
+                              style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'10px', cursor:'pointer' }}
+                              onClick={()=>window.open(vUrl.replace('/embed/','/watch?v='),'_blank')}
+                            >
+                              <div style={{ width:'56px', height:'56px', borderRadius:'50%', border:`2px solid ${ac}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px', color:ac }}>▶</div>
+                              <div style={{ fontSize:'12px', color:T.text2 }}>Clicca per riprodurre</div>
+                            </div>
+                          ) : (
+                            <iframe
+                              src={vUrl}
+                              allow="autoplay;encrypted-media"
+                              allowFullScreen
+                              style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:0, borderRadius:'12px' }}
+                            />
+                          )
+                        ) : (
+                          <video
+                            controls
+                            style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', borderRadius:'12px', background:'#000' }}
+                          >
+                            <source src={vUrl} />
+                          </video>
+                        )}
+                      </div>
                     </div>
                   )
                 })}
