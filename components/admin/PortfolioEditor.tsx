@@ -74,7 +74,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
         const { error } = await supabase.from('portfolios').update({
           title, slug, status: status as 'draft'|'published'|'private',
           theme: theme as 'dark'|'ivory'|'neon', accent_color: accentColor,
-          target, description, bio, video_url: videoUrl, noindex, downloads_disabled: dlDisabled,
+          target, description, bio, video_url: videoUrl, video_urls: videoUrls, noindex, downloads_disabled: dlDisabled,
         }).eq('id', portfolioId!)
         if (error) throw error
       }
@@ -83,17 +83,22 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
       await supabase.from('projects').delete().eq('portfolio_id', portfolioId!)
       if (projects.length) {
         await supabase.from('projects').insert(
-          projects.map((p, i) => ({ portfolio_id: portfolioId!, title: p.title, project_type: p.project_type, emoji: p.emoji, description: p.description, sort_order: i }))
+          projects.map((p, i) => ({ portfolio_id: portfolioId!, title: p.title, project_type: p.project_type, emoji: p.emoji, description: p.description, cover_url: p.cover_url ?? null, sort_order: i }))
         )
       }
 
-      // Salva tracce: aggiorna solo i metadati (il file_url viene gestito dall'uploader)
+      // Salva tracce: preserva file_url esistenti, aggiorna metadati
       for (let i = 0; i < tracks.length; i++) {
         const t = tracks[i]
         if (t.id) {
-          await supabase.from('tracks').update({ title: t.title, genre: t.genre, duration_label: t.duration_label, sort_order: i }).eq('id', t.id)
+          await supabase.from('tracks').update({
+            title: t.title, genre: t.genre, duration_label: t.duration_label, sort_order: i
+          }).eq('id', t.id)
         } else {
-          await supabase.from('tracks').insert({ portfolio_id: portfolioId!, title: t.title, genre: t.genre, duration_label: t.duration_label, sort_order: i })
+          await supabase.from('tracks').insert({
+            portfolio_id: portfolioId!, title: t.title, genre: t.genre,
+            duration_label: t.duration_label, file_url: t.file_url ?? null, sort_order: i
+          })
         }
       }
 
