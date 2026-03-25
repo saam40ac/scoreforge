@@ -15,6 +15,14 @@ export type Database = {
           long_bio: string | null
           avatar_url: string | null
           skills: string[]
+          instagram: string | null
+          linkedin: string | null
+          facebook: string | null
+          spotify: string | null
+          youtube: string | null
+          vimeo: string | null
+          imdb: string | null
+          custom_links: { label: string; url: string }[]
           created_at: string
           updated_at: string
         }
