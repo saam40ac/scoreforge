@@ -187,7 +187,7 @@ function LandingPageInner({ portfolio, profile, preview }: Props) {
               )}
               {email && (
                 <button style={{ padding:'11px 24px', borderRadius:'6px', fontSize:'14px', fontWeight:500, cursor:'pointer', background:'transparent', color:T.text2, border:`1px solid ${T.border}`, fontFamily:'Outfit,sans-serif' }}
-                  onClick={()=>setContactOpen(true)}>
+                  onClick={()=>{ setContactOpen(true); trackEvent({ portfolio_id: portfolio.id, event_type: 'contact_click', share_link_id: shareLinkId }) }}>
                   Scrivimi
                 </button>
               )}
@@ -348,7 +348,7 @@ function LandingPageInner({ portfolio, profile, preview }: Props) {
               <p style={{ ...body, maxWidth:'420px', margin:'0 auto 28px' }}>
                 Disponibile per nuovi progetti cinematografici, musicali e teatrali. Scrivimi per discutere la tua visione.
               </p>
-              <button onClick={()=>setContactOpen(true)}
+              <button onClick={()=>{ setContactOpen(true); trackEvent({ portfolio_id: portfolio.id, event_type: 'contact_click', share_link_id: shareLinkId }) }}
                 style={{ display:'inline-flex', alignItems:'center', gap:'8px', padding:'13px 32px', borderRadius:'8px', background:ac, color:'#09090f', border:'none', fontSize:'15px', fontWeight:600, cursor:'pointer', fontFamily:'Outfit,sans-serif', marginBottom:'20px' }}>
                 ✉ Invia un messaggio
               </button>
