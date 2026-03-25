@@ -34,6 +34,7 @@ export type Database = {
           description: string | null
           bio: string | null
           video_url: string | null
+          video_urls: string[] | null
           downloads_disabled: boolean
           noindex: boolean
           view_count: number
@@ -82,7 +83,7 @@ export type Database = {
           file_url: string
           file_size: number | null
           mime_type: string | null
-          media_type: 'audio' | 'image' | 'document'
+          media_type: 'audio' | 'image' | 'document' | 'video'
           storage_path: string | null
           created_at: string
         }
@@ -93,7 +94,6 @@ export type Database = {
   }
 }
 
-// Tipi derivati utili
 export type Profile   = Database['public']['Tables']['profiles']['Row']
 export type Portfolio = Database['public']['Tables']['portfolios']['Row']
 export type Project   = Database['public']['Tables']['projects']['Row']
