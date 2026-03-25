@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { trackEvent } from '@/lib/utils/analytics'
 import type { PortfolioWithContent, Profile } from '@/lib/supabase/types'
 import AudioPlayer from '@/components/player/AudioPlayer'
 
@@ -81,6 +82,11 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
   const ac = portfolio.accent_color || '#c8a45a'
   const [contactOpen, setContactOpen] = useState(false)
 
+  // Traccia visualizzazione landing page
+  useEffect(() => {
+    trackEvent({ portfolio_id: portfolio.id, event_type: 'view' })
+  }, [portfolio.id])
+
   const name             = profile.name                || 'Artista'
   const email            = profile.public_email        || ''
   const website          = profile.website             || ''
@@ -129,7 +135,7 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
             </div>
             <div style={{ display:'flex', gap:'8px', flexShrink:0 }}>
               {email && (
-                <button onClick={()=>setContactOpen(true)} style={{ padding:'8px 18px', borderRadius:'6px', background:ac, color:'#09090f', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'Outfit,sans-serif' }}>
+                <button onClick={()=>{ setContactOpen(true); trackEvent({ portfolio_id: portfolio.id, event_type: 'contact_click' }) }} style={{ padding:'8px 18px', borderRadius:'6px', background:ac, color:'#09090f', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'Outfit,sans-serif' }}>
                   Contattami
                 </button>
               )}
@@ -250,7 +256,7 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
               <h2 style={h2s}>Ascolta il mio lavoro</h2>
               <div style={{ display:'flex', flexDirection:'column', gap:'8px', marginTop:'14px' }}>
                 {portfolio.tracks.map(t => (
-                  <AudioPlayer key={t.id} track={t} accentColor={ac} theme={portfolio.theme as 'dark'|'ivory'|'neon'} />
+                  <AudioPlayer key={t.id} track={t} accentColor={ac} theme={portfolio.theme as 'dark'|'ivory'|'neon'} portfolioId={portfolio.id} />
                 ))}
               </div>
             </div>
