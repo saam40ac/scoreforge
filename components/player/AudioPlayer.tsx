@@ -9,7 +9,7 @@ interface Props {
   accentColor:  string
   theme:        'dark' | 'ivory' | 'neon'
   portfolioId:  string
-  shareLinkId?: string   // passato dalla landing se c'è ?ref=
+  shareLinkId?: string
 }
 
 const TRACK_BG = { dark:'#17171f', ivory:'#ede8df', neon:'#0e0e20' }
@@ -18,10 +18,9 @@ const TEXT2    = { dark:'#a09888', ivory:'#4a4540', neon:'#9890b8' }
 const TEXT3    = { dark:'#5a5548', ivory:'#9a9590', neon:'#4a4870' }
 
 export default function AudioPlayer({ track, accentColor, theme, portfolioId, shareLinkId }: Props) {
-  const containerRef  = useRef<HTMLDivElement>(null)
-  const wsRef         = useRef<any>(null)
-  const playTrackedRef = useRef(false)   // ← impedisce doppio invio play
-  const mountedRef    = useRef(false)    // ← impedisce double-mount StrictMode
+  const containerRef    = useRef<HTMLDivElement>(null)
+  const wsRef           = useRef<any>(null)
+  const lastPlaySentRef = useRef<number>(0)  // timestamp ultimo play inviato
 
   const [playing,  setPlaying]     = useState(false)
   const [ready,    setReady]       = useState(false)
@@ -29,15 +28,14 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
   const [progress, setProgress]    = useState(0)
 
   useEffect(() => {
-    // StrictMode monta due volte — saltiamo il secondo mount
-    if (mountedRef.current) return
-    mountedRef.current = true
-
     if (!containerRef.current || !track.file_url) return
+
     let ws: any
+    let destroyed = false
 
     import('wavesurfer.js').then(({ default: WaveSurfer }) => {
-      if (!containerRef.current) return
+      if (destroyed || !containerRef.current) return
+
       ws = WaveSurfer.create({
         container:     containerRef.current,
         waveColor:     `${accentColor}45`,
@@ -50,12 +48,15 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
         backend:       'WebAudio',
       })
 
-      ws.on('ready', () => setReady(true))
+      ws.on('ready', () => { if (!destroyed) setReady(true) })
 
       ws.on('play', () => {
-        // Invia evento play UNA SOLA VOLTA per sessione di ascolto
-        if (!playTrackedRef.current) {
-          playTrackedRef.current = true
+        if (destroyed) return
+        // Debounce: invia evento play solo se sono passati almeno 2 secondi
+        // dall'ultimo invio (evita doppio firing di WaveSurfer)
+        const now = Date.now()
+        if (now - lastPlaySentRef.current > 2000) {
+          lastPlaySentRef.current = now
           trackEvent({
             portfolio_id:  portfolioId,
             track_id:      track.id,
@@ -67,35 +68,34 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
       })
 
       ws.on('pause', () => {
-        // Reset: se fa pause e poi riplay, tracciamo di nuovo
-        playTrackedRef.current = false
+        if (destroyed) return
         const pos = Math.round(ws.getCurrentTime())
         const dur = ws.getDuration() || 1
-        const pct = Math.round((pos / dur) * 100)
         trackEvent({
           portfolio_id:  portfolioId,
           track_id:      track.id,
           event_type:    'pause',
           pause_position: pos,
-          duration_pct:  pct,
+          duration_pct:  Math.round((pos / dur) * 100),
           share_link_id: shareLinkId,
         })
       })
 
       ws.on('finish', () => {
-        playTrackedRef.current = false
+        if (destroyed) return
         setPlaying(false)
         setProgress(100)
         trackEvent({
-          portfolio_id: portfolioId,
-          track_id:     track.id,
-          event_type:   'complete',
-          duration_pct: 100,
+          portfolio_id:  portfolioId,
+          track_id:      track.id,
+          event_type:    'complete',
+          duration_pct:  100,
           share_link_id: shareLinkId,
         })
       })
 
       ws.on('audioprocess', () => {
+        if (destroyed) return
         const t   = ws.getCurrentTime()
         const dur = ws.getDuration() || 1
         setProgress(Math.round((t / dur) * 100))
@@ -104,6 +104,7 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
       })
 
       ws.on('seek', () => {
+        if (destroyed) return
         trackEvent({
           portfolio_id:  portfolioId,
           track_id:      track.id,
@@ -123,10 +124,16 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
     })
 
     return () => {
+      destroyed = true
       ws?.destroy()
       wsRef.current = null
+      setReady(false)
+      setPlaying(false)
+      setProgress(0)
+      setCurrentTime('0:00')
     }
-  }, [track.file_url, accentColor, portfolioId, track.id, shareLinkId, track.waveform_data])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [track.file_url, track.id])
 
   function handlePlay() {
     if (!wsRef.current || !ready) return
@@ -144,14 +151,28 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
       <button
         onClick={handlePlay}
         disabled={!ready && !!track.file_url}
-        style={{ width:'34px', height:'34px', borderRadius:'50%', background: playing ? `${accentColor}cc` : accentColor, display:'flex', alignItems:'center', justifyContent:'center', cursor: ready || !track.file_url ? 'pointer' : 'default', flexShrink:0, border:'none', fontSize: playing ? '10px' : '11px', color:'#09090f', opacity:(!ready && !!track.file_url) ? .5 : 1, transition:'all .15s' }}
+        style={{
+          width:'34px', height:'34px', borderRadius:'50%',
+          background: playing ? `${accentColor}cc` : accentColor,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          cursor: ready || !track.file_url ? 'pointer' : 'default',
+          flexShrink:0, border:'none',
+          fontSize: playing ? '10px' : '11px',
+          color:'#09090f',
+          opacity: (!ready && !!track.file_url) ? .5 : 1,
+          transition:'all .15s',
+        }}
       >
         {playing ? '⏸' : '▶'}
       </button>
 
       <div style={{ width:'140px', flexShrink:0 }}>
-        <div style={{ fontSize:'13px', fontWeight:500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{track.title}</div>
-        <div style={{ fontSize:'10px', fontFamily:'DM Mono,monospace', color:text3, marginTop:'1px' }}>{track.genre || '—'}</div>
+        <div style={{ fontSize:'13px', fontWeight:500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+          {track.title}
+        </div>
+        <div style={{ fontSize:'10px', fontFamily:'DM Mono,monospace', color:text3, marginTop:'1px' }}>
+          {track.genre || '—'}
+        </div>
       </div>
 
       <div style={{ flex:1, position:'relative', cursor:'pointer' }} onClick={handlePlay}>
