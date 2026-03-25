@@ -86,7 +86,10 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
   const website  = profile.website      || ''
   const initials = name.split(' ').map((n:string) => n[0]).join('').toUpperCase().slice(0, 2)
 
-  const hasVideo = !!portfolio.video_url?.includes('youtube.com/embed') || !!portfolio.video_url?.includes('vimeo.com')
+  const allVideos = [
+    ...(portfolio.video_url ? [portfolio.video_url] : []),
+    ...((portfolio as any).video_urls ?? []),
+  ].filter(Boolean) as string[]
 
   // ── Stili comuni ─────────────────────────────────────────────
   // Wrapper centrato con max-width e padding laterale generoso
@@ -251,23 +254,36 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
           </div>
         )}
 
-        {/* ── VIDEO ── */}
-        {hasVideo && (
+        {/* ── VIDEO (multipli) ── */}
+        {allVideos.length > 0 && (
           <div style={{ ...sec }}>
             <div style={wrap}>
               <div style={tag}>Video</div>
               <h2 style={h2s}>Showreel</h2>
-              <div style={{ position:'relative', paddingBottom:'56.25%', height:0, overflow:'hidden', borderRadius:'12px', marginTop:'14px', background:T.bg3 }}>
-                {preview ? (
-                  <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'10px', cursor:'pointer' }}
-                    onClick={()=>window.open(portfolio.video_url?.replace('/embed/','/watch?v=') ?? '','_blank')}>
-                    <div style={{ width:'60px', height:'60px', borderRadius:'50%', border:`2px solid ${ac}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', color:ac }}>▶</div>
-                    <div style={{ fontSize:'13px', color:T.text2 }}>Clicca per riprodurre</div>
-                  </div>
-                ) : (
-                  <iframe src={portfolio.video_url!} allow="autoplay;encrypted-media" allowFullScreen
-                    style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:0, borderRadius:'12px' }} />
-                )}
+              <div style={{ display:'flex', flexDirection:'column', gap:'16px', marginTop:'14px' }}>
+                {allVideos.map((vUrl, vi) => {
+                  const isEmbed = vUrl.includes('youtube') || vUrl.includes('vimeo')
+                  return (
+                    <div key={vi} style={{ position:'relative', paddingBottom:'56.25%', height:0, overflow:'hidden', borderRadius:'12px', background:T.bg3 }}>
+                      {isEmbed ? (
+                        preview ? (
+                          <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'10px', cursor:'pointer' }}
+                            onClick={()=>window.open(vUrl.replace('/embed/','/watch?v='),'_blank')}>
+                            <div style={{ width:'60px', height:'60px', borderRadius:'50%', border:`2px solid ${ac}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', color:ac }}>▶</div>
+                            <div style={{ fontSize:'13px', color:T.text2 }}>Clicca per riprodurre</div>
+                          </div>
+                        ) : (
+                          <iframe src={vUrl} allow="autoplay;encrypted-media" allowFullScreen
+                            style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:0, borderRadius:'12px' }} />
+                        )
+                      ) : (
+                        <video controls style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', borderRadius:'12px', background:'#000' }}>
+                          <source src={vUrl} />
+                        </video>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>
