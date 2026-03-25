@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 function parseUA(ua: string): string {
   if (!ua) return 'Unknown'
-  const browser = ua.includes('Edg') ? 'Edge'
+  const browser = ua.includes('Edg')     ? 'Edge'
     : ua.includes('Chrome')  ? 'Chrome'
     : ua.includes('Firefox')  ? 'Firefox'
     : ua.includes('Safari')   ? 'Safari'
@@ -35,79 +35,46 @@ export async function POST(req: NextRequest) {
     const city     = req.headers.get('x-vercel-ip-city')    || null
     const ua       = req.headers.get('user-agent') || ''
 
-    // 1. Registra evento
-    await supabase.from('analytics_events').insert({
+    // 1. Registra evento (policy pubblica già presente)
+    const { error: insertError } = await supabase.from('analytics_events').insert({
       portfolio_id,
-      track_id:        track_id        || null,
+      track_id:         track_id        || null,
       event_type,
-      play_position:   play_position   ?? null,
-      pause_position:  pause_position  ?? null,
-      duration_pct:    duration_pct    ?? null,
-      share_link_id:   share_link_id   || null,
-      session_id:      session_id      || null,
-      referrer:        referrer        || null,
+      play_position:    play_position   ?? null,
+      pause_position:   pause_position  ?? null,
+      duration_pct:     duration_pct    ?? null,
+      share_link_id:    share_link_id   || null,
+      session_id:       session_id      || null,
+      referrer:         referrer        || null,
       country, city,
       user_agent_short: parseUA(ua),
     })
 
-    // 2. Aggiorna share link (se presente)
+    if (insertError) {
+      console.error('Analytics insert error:', insertError)
+    }
+
+    // 2. Aggiorna contatori share link tramite funzioni SECURITY DEFINER
+    //    (bypassano RLS — sicure perché accettano solo UUID validi)
     if (share_link_id) {
       if (event_type === 'view') {
-        await supabase.rpc('increment_share_link_views', { link_id: share_link_id })
-          .then(({ error }) => {
-            // Fallback se rpc non esiste ancora: update diretto
-            if (error) {
-              supabase
-                .from('share_links')
-                .select('view_count')
-                .eq('id', share_link_id)
-                .single()
-                .then(({ data }) => {
-                  if (data) {
-                    supabase.from('share_links').update({
-                      view_count: (data.view_count || 0) + 1,
-                      last_viewed_at: new Date().toISOString(),
-                    }).eq('id', share_link_id).then(() => {})
-                  }
-                })
-            }
-          })
+        const { error } = await supabase.rpc('increment_share_link_view', { link_id: share_link_id })
+        if (error) console.error('increment_share_link_view error:', error)
       }
       if (event_type === 'play') {
-        supabase
-          .from('share_links')
-          .select('play_count')
-          .eq('id', share_link_id)
-          .single()
-          .then(({ data }) => {
-            if (data) {
-              supabase.from('share_links').update({
-                play_count: (data.play_count || 0) + 1,
-              }).eq('id', share_link_id).then(() => {})
-            }
-          })
+        const { error } = await supabase.rpc('increment_share_link_play', { link_id: share_link_id })
+        if (error) console.error('increment_share_link_play error:', error)
       }
     }
 
-    // 3. Aggiorna view_count sul portfolio (solo per event view)
+    // 3. Aggiorna view_count portfolio (fire and forget)
     if (event_type === 'view') {
-      supabase
-        .from('portfolios')
-        .select('view_count')
-        .eq('id', portfolio_id)
-        .single()
-        .then(({ data }) => {
-          if (data) {
-            supabase.from('portfolios').update({
-              view_count: (data.view_count || 0) + 1
-            }).eq('id', portfolio_id).then(() => {})
-          }
-        })
+      supabase.rpc('increment_portfolio_view', { p_id: portfolio_id }).then(() => {})
     }
 
     return NextResponse.json({ ok: true })
   } catch (e) {
-    console.error('Analytics error:', e)
+    console.error('Analytics route error:', e)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }
