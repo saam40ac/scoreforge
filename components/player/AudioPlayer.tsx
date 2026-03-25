@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { Track } from '@/lib/supabase/types'
+import { trackEvent } from '@/lib/utils/analytics'
 
 interface Props {
-  track: Track
+  track:       Track
   accentColor: string
-  theme: 'dark' | 'ivory' | 'neon'
+  theme:       'dark' | 'ivory' | 'neon'
+  portfolioId: string
 }
 
 const TRACK_BG = { dark: '#17171f', ivory: '#ede8df', neon: '#0e0e20' }
@@ -14,54 +16,80 @@ const BORDER   = { dark: 'rgba(255,255,255,0.07)', ivory: 'rgba(0,0,0,0.09)', ne
 const TEXT2    = { dark: '#a09888', ivory: '#4a4540', neon: '#9890b8' }
 const TEXT3    = { dark: '#5a5548', ivory: '#9a9590', neon: '#4a4870' }
 
-export default function AudioPlayer({ track, accentColor, theme }: Props) {
+export default function AudioPlayer({ track, accentColor, theme, portfolioId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const wsRef        = useRef<unknown>(null)
-  const [playing,    setPlaying]   = useState(false)
-  const [ready,      setReady]     = useState(false)
+  const wsRef        = useRef<any>(null)
+  const startTimeRef = useRef<number>(0)  // secondi: quando ha fatto play
+  const [playing,  setPlaying]  = useState(false)
+  const [ready,    setReady]    = useState(false)
   const [currentTime, setCurrentTime] = useState('0:00')
+  const [progress, setProgress] = useState(0) // 0-100
 
   useEffect(() => {
     if (!containerRef.current || !track.file_url) return
-
-    let ws: { playPause:()=>void; destroy:()=>void; on:(e:string, cb:(...a:unknown[])=>void)=>void; getCurrentTime:()=>number }
+    let ws: any
 
     import('wavesurfer.js').then(({ default: WaveSurfer }) => {
       ws = WaveSurfer.create({
-        container: containerRef.current!,
-        waveColor: `${accentColor}50`,
+        container:     containerRef.current!,
+        waveColor:     `${accentColor}45`,
         progressColor: accentColor,
-        cursorColor: accentColor,
-        height: 36,
-        barWidth: 2,
-        barGap: 1.5,
-        barRadius: 2,
-        backend: 'WebAudio',
-      }) as typeof ws
+        cursorColor:   accentColor,
+        height:        36,
+        barWidth:      2,
+        barGap:        1.5,
+        barRadius:     2,
+        backend:       'WebAudio',
+      })
 
       ws.on('ready', () => setReady(true))
-      ws.on('finish', () => { setPlaying(false); setCurrentTime('0:00') })
+
+      ws.on('play', () => {
+        startTimeRef.current = ws.getCurrentTime()
+        trackEvent({ portfolio_id: portfolioId, track_id: track.id, event_type: 'play', play_position: Math.round(ws.getCurrentTime()) })
+      })
+
+      ws.on('pause', () => {
+        const pos = Math.round(ws.getCurrentTime())
+        const dur = ws.getDuration() || 1
+        const pct = Math.round((pos / dur) * 100)
+        trackEvent({ portfolio_id: portfolioId, track_id: track.id, event_type: 'pause', pause_position: pos, duration_pct: pct })
+      })
+
+      ws.on('finish', () => {
+        setPlaying(false)
+        setProgress(100)
+        trackEvent({ portfolio_id: portfolioId, track_id: track.id, event_type: 'complete', duration_pct: 100 })
+      })
+
       ws.on('audioprocess', () => {
-        const t = Math.floor(ws.getCurrentTime())
-        setCurrentTime(`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`)
+        const t   = ws.getCurrentTime()
+        const dur = ws.getDuration() || 1
+        setProgress(Math.round((t / dur) * 100))
+        const s = Math.floor(t)
+        setCurrentTime(`${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`)
+      })
+
+      ws.on('seek', () => {
+        const pos = Math.round(ws.getCurrentTime())
+        trackEvent({ portfolio_id: portfolioId, track_id: track.id, event_type: 'seek', play_position: pos })
       })
 
       if (track.waveform_data) {
-        ws.load(track.file_url!, [track.waveform_data as unknown as number[]])
+        ws.load(track.file_url, [track.waveform_data])
       } else {
-        ws.load(track.file_url!)
+        ws.load(track.file_url)
       }
 
       wsRef.current = ws
     })
 
     return () => { ws?.destroy() }
-  }, [track.file_url, accentColor, track.waveform_data])
+  }, [track.file_url, accentColor, portfolioId, track.id, track.waveform_data])
 
   function handlePlay() {
-    if (!wsRef.current) return
-    const ws = wsRef.current as { playPause:()=>void }
-    ws.playPause()
+    if (!wsRef.current || !ready) return
+    wsRef.current.playPause()
     setPlaying(p => !p)
   }
 
@@ -71,38 +99,68 @@ export default function AudioPlayer({ track, accentColor, theme }: Props) {
   const text3  = TEXT3[theme]
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '11px', padding: '10px 13px', borderRadius: '8px', border: `1px solid ${border}`, background: bg }}>
+    <div style={{ display:'flex', alignItems:'center', gap:'11px', padding:'10px 13px', borderRadius:'8px', border:`1px solid ${border}`, background:bg, transition:'background .15s' }}>
+
+      {/* Play/Pause button */}
       <button
         onClick={handlePlay}
         disabled={!ready && !!track.file_url}
-        style={{ width: '32px', height: '32px', borderRadius: '50%', background: accentColor, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: track.file_url ? 'pointer' : 'default', flexShrink: 0, border: 'none', fontSize: '11px', color: '#09090f', opacity: (!ready && !!track.file_url) ? .5 : 1, transition: 'transform .15s' }}
+        style={{
+          width:'34px', height:'34px', borderRadius:'50%',
+          background: playing ? `${accentColor}cc` : accentColor,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          cursor: ready || !track.file_url ? 'pointer' : 'default',
+          flexShrink:0, border:'none',
+          fontSize: playing ? '10px' : '11px',
+          color:'#09090f',
+          opacity: (!ready && !!track.file_url) ? .5 : 1,
+          transition:'all .15s',
+          transform: playing ? 'scale(1.05)' : 'scale(1)',
+        }}
       >
         {playing ? '⏸' : '▶'}
       </button>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      {/* Info traccia */}
+      <div style={{ width:'140px', flexShrink:0 }}>
+        <div style={{ fontSize:'13px', fontWeight:500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
           {track.title}
         </div>
-        <div style={{ fontSize: '10px', fontFamily: 'DM Mono, monospace', color: text3, marginTop: '1px' }}>
-          {track.genre}
+        <div style={{ fontSize:'10px', fontFamily:'DM Mono,monospace', color:text3, marginTop:'1px' }}>
+          {track.genre || '—'}
         </div>
       </div>
 
-      {/* Waveform canvas */}
-      <div ref={containerRef} style={{ flex: 1, minWidth: 0 }}>
-        {!track.file_url && (
-          <div style={{ height: '36px', display: 'flex', alignItems: 'center', gap: '2px' }}>
-            {Array.from({ length: 28 }, (_, i) => (
-              <div key={i} style={{ flex: 1, height: `${Math.round(8 + Math.sin(i * 0.8) * 10 + Math.random() * 10)}px`, background: `${accentColor}40`, borderRadius: '1px' }} />
-            ))}
+      {/* Waveform canvas + progress bar integrata */}
+      <div style={{ flex:1, position:'relative', cursor:'pointer' }} onClick={handlePlay}>
+        <div ref={containerRef} style={{ width:'100%' }}>
+          {/* Waveform statica decorativa se no file_url */}
+          {!track.file_url && (
+            <div style={{ height:'36px', display:'flex', alignItems:'center', gap:'1.5px' }}>
+              {Array.from({ length: 32 }, (_, i) => (
+                <div key={i} style={{
+                  flex:1,
+                  height:`${Math.round(8 + Math.sin(i * 0.9) * 10 + (i % 3) * 4)}px`,
+                  background:`${accentColor}35`,
+                  borderRadius:'1px',
+                }} />
+              ))}
+            </div>
+          )}
+        </div>
+        {/* Barra progresso sotto la waveform */}
+        {playing && (
+          <div style={{ position:'absolute', bottom:'-4px', left:0, right:0, height:'2px', background:`${accentColor}20`, borderRadius:'1px' }}>
+            <div style={{ height:'100%', width:`${progress}%`, background:accentColor, borderRadius:'1px', transition:'width .5s linear' }} />
           </div>
         )}
       </div>
 
-      <div style={{ fontSize: '11px', fontFamily: 'DM Mono, monospace', color: text2, whiteSpace: 'nowrap', flexShrink: 0 }}>
+      {/* Durata / tempo corrente */}
+      <div style={{ fontSize:'11px', fontFamily:'DM Mono,monospace', color:text2, whiteSpace:'nowrap', flexShrink:0, minWidth:'36px', textAlign:'right' }}>
         {playing ? currentTime : (track.duration_label || '—')}
       </div>
+
     </div>
   )
 }
