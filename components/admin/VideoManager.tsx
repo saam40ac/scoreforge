@@ -183,6 +183,16 @@ export default function VideoManager({
     return id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : null
   }
 
+  // Mostra solo il nome del file per gli URL lunghi di Supabase Storage
+  function displayUrl(url: string) {
+    if (url.includes('supabase.co/storage')) {
+      const filename = decodeURIComponent(url.split('/').pop() || url)
+      return filename.length > 48 ? filename.slice(0, 45) + '…' : filename
+    }
+    if (url.length > 60) return url.slice(0, 57) + '…'
+    return url
+  }
+
   return (
     <div className="space-y-6">
 
@@ -217,7 +227,7 @@ export default function VideoManager({
                         </span>
                       )}
                     </div>
-                    <div className="text-[10px] font-mono text-[#5a5548] truncate mt-0.5">{v.url}</div>
+                    <div className="text-[10px] font-mono text-[#5a5548] truncate mt-0.5" title={v.url}>{displayUrl(v.url)}</div>
                     <div className="text-[9px] text-[#5a5548] mt-0.5">
                       {v.isEmbed
                         ? (v.url.includes('youtube') ? '▶ YouTube embed' : '▶ Vimeo embed')
