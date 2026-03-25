@@ -81,9 +81,10 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
   const ac = portfolio.accent_color || '#c8a45a'
   const [contactOpen, setContactOpen] = useState(false)
 
-  const name     = profile.name         || 'Artista'
-  const email    = profile.public_email || ''
-  const website  = profile.website      || ''
+  const name             = profile.name                || 'Artista'
+  const email            = profile.public_email        || ''
+  const website          = profile.website             || ''
+  const professionalTitle = (profile as any).professional_title || ''
   const initials = name.split(' ').map((n:string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   const allVideos = [
@@ -122,7 +123,9 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
             )}
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'18px', fontWeight:400, color:T.text }}>{name}</div>
-              <div style={{ fontSize:'11px', color:T.text3, fontFamily:'DM Mono,monospace', marginTop:'2px' }}>Compositore · Musica Originale</div>
+              {professionalTitle && (
+                <div style={{ fontSize:'11px', color:T.text3, fontFamily:'DM Mono,monospace', marginTop:'2px' }}>{professionalTitle}</div>
+              )}
             </div>
             <div style={{ display:'flex', gap:'8px', flexShrink:0 }}>
               {email && (
