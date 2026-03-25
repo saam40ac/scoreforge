@@ -4,11 +4,12 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { LayoutDashboard, FolderOpen, Music, User, Settings, LogOut, X } from 'lucide-react'
+import { LayoutDashboard, FolderOpen, Music, User, Settings, LogOut, X, BarChart2 } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard',  label: 'Dashboard',     icon: LayoutDashboard },
   { href: '/portfolios', label: 'Portfolio',      icon: FolderOpen },
+  { href: '/analytics',  label: 'Analytics',      icon: BarChart2 },
   { href: '/media',      label: 'Media Library',  icon: Music },
   { href: '/bio',        label: 'Biografia',      icon: User },
   { href: '/settings',   label: 'Impostazioni',   icon: Settings },
