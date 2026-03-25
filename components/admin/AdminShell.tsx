@@ -3,21 +3,50 @@
 import { useState } from 'react'
 import { Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
+import { ThemeProvider, useTheme } from './ThemeProvider'
 
-interface AdminShellProps {
+function ThemeToggle() {
+  const { theme, toggle } = useTheme()
+  return (
+    <button
+      onClick={toggle}
+      title={theme === 'dark' ? 'Passa al tema chiaro' : 'Passa al tema scuro'}
+      style={{
+        background: 'var(--sf-bg3)',
+        border: '1px solid var(--sf-border)',
+        borderRadius: '8px',
+        padding: '6px 10px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        fontSize: '12px',
+        color: 'var(--sf-text3)',
+        transition: 'all .15s',
+        fontFamily: 'DM Mono, monospace',
+      }}
+    >
+      <span style={{ fontSize: '14px' }}>{theme === 'dark' ? '☀' : '☾'}</span>
+      <span style={{ display: 'none' }} className="sm:inline">
+        {theme === 'dark' ? 'Chiaro' : 'Scuro'}
+      </span>
+    </button>
+  )
+}
+
+function Shell({ children, userName, userEmail }: {
   children: React.ReactNode
   userName: string
   userEmail: string
-}
-
-export default function AdminShell({ children, userName, userEmail }: AdminShellProps) {
+}) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex min-h-screen bg-[#09090f]">
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--sf-bg)' }}>
+
       {/* Sidebar desktop */}
-      <div className="hidden lg:block w-[244px] flex-shrink-0">
-        <div className="fixed top-0 left-0 bottom-0 w-[244px]">
+      <div className="hidden lg:block" style={{ width: '244px', flexShrink: 0 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: '244px' }}>
           <Sidebar userName={userName} userEmail={userEmail} />
         </div>
       </div>
@@ -25,35 +54,81 @@ export default function AdminShell({ children, userName, userEmail }: AdminShell
       {/* Overlay mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 40 }}
+          className="lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar mobile */}
-      <div className={`fixed top-0 left-0 bottom-0 w-[244px] z-50 transition-transform duration-300 lg:hidden ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <div
+        style={{
+          position: 'fixed', top: 0, left: 0, bottom: 0, width: '244px', zIndex: 50,
+          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform .3s',
+        }}
+        className="lg:hidden"
+      >
         <Sidebar userName={userName} userEmail={userEmail} onClose={() => setSidebarOpen(false)} />
       </div>
 
-      {/* Contenuto principale */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar mobile */}
-        <div className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-[#2a2830] bg-[#09090f] sticky top-0 z-30">
+      {/* Main */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        {/* Topbar */}
+        <div style={{
+          height: '54px',
+          borderBottom: '1px solid var(--sf-border)',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 20px',
+          gap: '12px',
+          background: 'var(--sf-topbar)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 30,
+          backdropFilter: 'blur(8px)',
+        }}>
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-[#a09888] hover:text-[#f0ebe0] transition-colors"
+            className="lg:hidden"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sf-text2)', padding: '4px' }}
           >
             <Menu size={20} />
           </button>
-          <span className="font-serif text-lg text-[#e2c47e]">ScoreForge</span>
+
+          {/* Logo mobile */}
+          <span
+            className="lg:hidden"
+            style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', color: 'var(--sf-gold2)' }}
+          >
+            ScoreForge
+          </span>
+
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
+
+          {/* Theme toggle — sempre visibile */}
+          <ThemeToggle />
         </div>
 
-        <main className="flex-1 animate-fadein">
+        <main style={{ flex: 1 }} className="animate-fadein">
           {children}
         </main>
       </div>
     </div>
+  )
+}
+
+export default function AdminShell({ children, userName, userEmail }: {
+  children: React.ReactNode
+  userName: string
+  userEmail: string
+}) {
+  return (
+    <ThemeProvider>
+      <Shell userName={userName} userEmail={userEmail}>
+        {children}
+      </Shell>
+    </ThemeProvider>
   )
 }
