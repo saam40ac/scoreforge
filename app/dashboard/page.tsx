@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Plus, Eye, Music, FileText } from 'lucide-react'
+import { portfolioUrl } from '@/lib/utils/url'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -116,7 +117,7 @@ export default async function DashboardPage() {
               {portfolios?.filter(p => p.status === 'published').map(p => (
                 <div key={p.id} className="flex items-center gap-3 bg-[#17171f] border border-[#2a2830] rounded-lg px-4 py-2.5">
                   <span className="flex-1 font-mono text-xs text-[#c8a45a] truncate">
-                    {process.env.NEXT_PUBLIC_APP_URL}/{p.slug}
+                    {portfolioUrl(p.slug)}
                   </span>
                   <Link href={`/portfolios/${p.id}/preview`} className="btn btn-outline btn-sm">Anteprima</Link>
                 </div>
