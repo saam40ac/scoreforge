@@ -20,7 +20,11 @@ const TEXT3    = { dark:'#5a5548', ivory:'#9a9590', neon:'#4a4870' }
 export default function AudioPlayer({ track, accentColor, theme, portfolioId, shareLinkId }: Props) {
   const containerRef    = useRef<HTMLDivElement>(null)
   const wsRef           = useRef<any>(null)
-  const lastPlaySentRef = useRef<number>(0)  // timestamp ultimo play inviato
+  const lastPlaySentRef  = useRef<number>(0)     // timestamp ultimo play inviato
+  const shareLinkIdRef   = useRef<string | undefined>(shareLinkId)  // sempre aggiornato
+
+  // Aggiorna il ref ogni volta che la prop cambia (risoluzione asincrona)
+  shareLinkIdRef.current = shareLinkId
 
   const [playing,  setPlaying]     = useState(false)
   const [ready,    setReady]       = useState(false)
@@ -62,7 +66,7 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
             track_id:      track.id,
             event_type:    'play',
             play_position: Math.round(ws.getCurrentTime()),
-            share_link_id: shareLinkId,
+            share_link_id: shareLinkIdRef.current,
           })
         }
       })
@@ -77,7 +81,7 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
           event_type:    'pause',
           pause_position: pos,
           duration_pct:  Math.round((pos / dur) * 100),
-          share_link_id: shareLinkId,
+          share_link_id: shareLinkIdRef.current,
         })
       })
 
@@ -90,7 +94,7 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
           track_id:      track.id,
           event_type:    'complete',
           duration_pct:  100,
-          share_link_id: shareLinkId,
+          share_link_id: shareLinkIdRef.current,
         })
       })
 
@@ -110,7 +114,7 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
           track_id:      track.id,
           event_type:    'seek',
           play_position: Math.round(ws.getCurrentTime()),
-          share_link_id: shareLinkId,
+          share_link_id: shareLinkIdRef.current,
         })
       })
 
