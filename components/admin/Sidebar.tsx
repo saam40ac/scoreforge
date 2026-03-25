@@ -4,35 +4,24 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import {
-  LayoutDashboard, FolderOpen, Music, User, Settings, LogOut, X
-} from 'lucide-react'
+import { LayoutDashboard, FolderOpen, Music, User, Settings, LogOut, X } from 'lucide-react'
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard',      icon: LayoutDashboard },
-  { href: '/portfolios', label: 'Portfolio',     icon: FolderOpen },
-  { href: '/media',     label: 'Media Library',  icon: Music },
-  { href: '/bio',       label: 'Biografia',      icon: User },
-  { href: '/settings',  label: 'Impostazioni',   icon: Settings },
+  { href: '/dashboard',  label: 'Dashboard',     icon: LayoutDashboard },
+  { href: '/portfolios', label: 'Portfolio',      icon: FolderOpen },
+  { href: '/media',      label: 'Media Library',  icon: Music },
+  { href: '/bio',        label: 'Biografia',      icon: User },
+  { href: '/settings',   label: 'Impostazioni',   icon: Settings },
 ]
 
-interface SidebarProps {
-  userName: string
-  userEmail: string
-  onClose?: () => void
-}
+interface Props { userName: string; userEmail: string; onClose?: () => void }
 
-export default function Sidebar({ userName, userEmail, onClose }: SidebarProps) {
+export default function Sidebar({ userName, userEmail, onClose }: Props) {
   const pathname = usePathname()
   const router   = useRouter()
   const supabase = createClient()
 
-  const initials = userName
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
+  const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -41,41 +30,80 @@ export default function Sidebar({ userName, userEmail, onClose }: SidebarProps) 
     router.refresh()
   }
 
+  const s = {
+    aside: {
+      display: 'flex', flexDirection: 'column' as const, height: '100%',
+      background: 'var(--sf-sidebar)', borderRight: '1px solid var(--sf-border)',
+    },
+    logo: {
+      padding: '22px 20px 16px', borderBottom: '1px solid var(--sf-border)',
+    },
+    logoMark: {
+      display: 'flex', alignItems: 'center', gap: '8px',
+      fontFamily: "'Cormorant Garamond', serif", fontSize: '21px',
+      color: 'var(--sf-gold2)', fontWeight: 600,
+    },
+    logoIcon: {
+      width: '28px', height: '28px', borderRadius: '7px',
+      background: 'linear-gradient(135deg, var(--sf-gold), var(--sf-gold2))',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '13px', fontFamily: "'Cormorant Garamond', serif",
+      fontWeight: 700, color: 'var(--sf-bg)', flexShrink: 0,
+    },
+    sub: {
+      fontSize: '9px', color: 'var(--sf-text3)', letterSpacing: '.15em',
+      textTransform: 'uppercase' as const, fontFamily: 'DM Mono, monospace',
+      marginTop: '2px', paddingLeft: '36px',
+    },
+    nav: { padding: '10px 0', flex: 1, overflowY: 'auto' as const },
+    sect: {
+      padding: '5px 20px 2px', fontSize: '9px', color: 'var(--sf-text3)',
+      letterSpacing: '.15em', textTransform: 'uppercase' as const,
+      fontFamily: 'DM Mono, monospace', marginTop: '8px',
+    },
+    foot: { padding: '12px', borderTop: '1px solid var(--sf-border)' },
+  }
+
   return (
-    <aside className="flex flex-col h-full bg-[#111118] border-r border-[#2a2830]">
+    <aside style={s.aside}>
       {/* Logo */}
-      <div className="flex items-center justify-between px-5 py-6 border-b border-[#2a2830]">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#c8a45a] to-[#e2c47e] flex items-center justify-center font-serif text-sm font-bold text-[#09090f]">S</div>
-            <span className="font-serif text-xl text-[#e2c47e] font-semibold">ScoreForge</span>
+      <div style={s.logo}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={s.logoMark}>
+            <div style={s.logoIcon}>S</div>
+            ScoreForge
           </div>
-          <p className="text-[9px] text-[#5a5548] tracking-[0.15em] uppercase font-mono mt-0.5 pl-9">Platform v1.0</p>
+          {onClose && (
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sf-text3)', padding: '2px' }} className="lg:hidden">
+              <X size={17} />
+            </button>
+          )}
         </div>
-        {onClose && (
-          <button onClick={onClose} className="text-[#5a5548] hover:text-[#f0ebe0] transition-colors lg:hidden">
-            <X size={18} />
-          </button>
-        )}
+        <div style={s.sub}>Platform v1.0</div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2">
-        <div className="text-[9px] text-[#5a5548] uppercase tracking-[0.15em] font-mono px-3 py-1 mb-1">Principale</div>
+      <nav style={s.nav}>
+        <div style={s.sect}>Principale</div>
         {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname.startsWith(href)
+          const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
           return (
             <Link
               key={href}
               href={href}
               onClick={onClose}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13.5px] mb-0.5 transition-all duration-150 ${
-                active
-                  ? 'bg-[#c8a45a]/12 text-[#e2c47e]'
-                  : 'text-[#a09888] hover:bg-[#17171f] hover:text-[#f0ebe0]'
-              }`}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '9px',
+                padding: '9px 16px', margin: '1px 6px',
+                borderRadius: '8px', fontSize: '13.5px',
+                color: active ? 'var(--sf-gold2)' : 'var(--sf-text2)',
+                background: active ? 'color-mix(in srgb, var(--sf-gold) 12%, transparent)' : 'transparent',
+                textDecoration: 'none', transition: 'all .15s',
+              }}
+              onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'var(--sf-bg3)'; (e.currentTarget as HTMLElement).style.color = 'var(--sf-text)' } }}
+              onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--sf-text2)' } }}
             >
-              <Icon size={15} className={active ? 'opacity-100' : 'opacity-50'} />
+              <Icon size={15} style={{ opacity: active ? 1 : 0.5, flexShrink: 0 }} />
               {label}
             </Link>
           )
@@ -83,19 +111,31 @@ export default function Sidebar({ userName, userEmail, onClose }: SidebarProps) 
       </nav>
 
       {/* Footer utente */}
-      <div className="p-3 border-t border-[#2a2830]">
+      <div style={s.foot}>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg hover:bg-[#17171f] transition-colors group"
+          style={{
+            display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+            padding: '8px', borderRadius: '8px', background: 'none', border: 'none',
+            cursor: 'pointer', transition: 'background .15s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'var(--sf-bg3)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
         >
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#c8a45a] to-[#e2c47e] flex items-center justify-center font-serif text-sm font-semibold text-[#09090f] flex-shrink-0">
+          <div style={{
+            width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0,
+            background: 'linear-gradient(135deg, var(--sf-gold), var(--sf-gold2))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: "'Cormorant Garamond', serif", fontSize: '13px',
+            fontWeight: 600, color: 'var(--sf-bg)',
+          }}>
             {initials || 'A'}
           </div>
-          <div className="flex-1 text-left min-w-0">
-            <div className="text-[13px] font-medium text-[#f0ebe0] truncate">{userName || 'Artista'}</div>
-            <div className="text-[10.5px] text-[#5a5548] font-mono truncate">{userEmail}</div>
+          <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
+            <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--sf-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName || 'Artista'}</div>
+            <div style={{ fontSize: '10.5px', color: 'var(--sf-text3)', fontFamily: 'DM Mono, monospace', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userEmail}</div>
           </div>
-          <LogOut size={14} className="text-[#5a5548] opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+          <LogOut size={13} style={{ color: 'var(--sf-text3)', flexShrink: 0, opacity: 0.6 }} />
         </button>
       </div>
     </aside>
