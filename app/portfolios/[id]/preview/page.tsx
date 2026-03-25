@@ -5,6 +5,7 @@ import { ChevronLeft, Copy, Code } from 'lucide-react'
 import LandingPage from '@/components/landing/LandingPage'
 import type { PortfolioWithContent, Project, Track, Profile } from '@/lib/supabase/types'
 import EmbedCopyButton from '@/components/admin/EmbedCopyButton'
+import { portfolioUrl } from '@/lib/utils/url'
 
 export default async function PreviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -32,8 +33,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
 
   const profile = (profileData ?? { name: '', public_email: '', website: '', short_bio: '', avatar_url: null }) as Pick<Profile, 'name' | 'public_email' | 'website' | 'short_bio' | 'avatar_url'>
 
-  const appUrl    = process.env.NEXT_PUBLIC_APP_URL || ''
-  const publicUrl = `${appUrl}/${pf.slug}`
+  const publicUrl = portfolioUrl(pf.slug)
   const embedCode = `<iframe src="${publicUrl}" width="100%" height="700" frameborder="0" allow="autoplay" style="border-radius:12px;overflow:hidden;"></iframe>`
 
   return (
