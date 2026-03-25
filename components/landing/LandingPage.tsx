@@ -6,9 +6,21 @@ import { trackEvent } from '@/lib/utils/analytics'
 import type { PortfolioWithContent, Profile } from '@/lib/supabase/types'
 import AudioPlayer from '@/components/player/AudioPlayer'
 
+interface CustomLink { label: string; url: string }
+
 interface Props {
   portfolio: PortfolioWithContent
-  profile: Pick<Profile, 'name' | 'public_email' | 'website' | 'short_bio' | 'avatar_url'>
+  profile: Pick<Profile, 'name' | 'public_email' | 'website' | 'short_bio' | 'avatar_url'> & {
+    professional_title?: string | null
+    instagram?:   string | null
+    linkedin?:    string | null
+    facebook?:    string | null
+    spotify?:     string | null
+    youtube?:     string | null
+    vimeo?:       string | null
+    imdb?:        string | null
+    custom_links?: CustomLink[]
+  }
   preview?: boolean
 }
 
@@ -109,7 +121,19 @@ function LandingPageInner({ portfolio, profile, preview }: Props) {
   const name             = profile.name                || 'Artista'
   const email            = profile.public_email        || ''
   const website          = profile.website             || ''
-  const professionalTitle = (profile as any).professional_title || ''
+  const professionalTitle = profile.professional_title || ''
+  const customLinks      = profile.custom_links        || []
+
+  // Social links — solo quelli compilati
+  const socialLinks = [
+    { key:'instagram', label:'Instagram', icon:'📸', url: profile.instagram },
+    { key:'linkedin',  label:'LinkedIn',  icon:'💼', url: profile.linkedin  },
+    { key:'facebook',  label:'Facebook',  icon:'👥', url: profile.facebook  },
+    { key:'spotify',   label:'Spotify',   icon:'🎵', url: profile.spotify   },
+    { key:'youtube',   label:'YouTube',   icon:'▶',  url: profile.youtube   },
+    { key:'vimeo',     label:'Vimeo',     icon:'🎬', url: profile.vimeo     },
+    { key:'imdb',      label:'IMDb',      icon:'🎞', url: profile.imdb      },
+  ].filter(s => s.url && s.url.trim() !== '')
   const initials = name.split(' ').map((n:string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   const allVideos = [
@@ -368,8 +392,47 @@ function LandingPageInner({ portfolio, profile, preview }: Props) {
           </div>
         )}
 
+        {/* ── LINK SOCIAL & PERSONALIZZATI ── */}
+        {(socialLinks.length > 0 || customLinks.length > 0) && (
+          <div style={{ padding:'32px clamp(16px,3vw,40px)', borderTop:`1px solid ${T.border}`, background:T.bg2 }}>
+            <div style={{ maxWidth:'1080px', margin:'0 auto' }}>
+              <div style={{ fontSize:'9.5px', letterSpacing:'.2em', textTransform:'uppercase', fontFamily:'DM Mono,monospace', color:T.text3, marginBottom:'14px' }}>
+                Trovami anche qui
+              </div>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:'8px', alignItems:'center' }}>
+                {socialLinks.map(s => (
+                  <a key={s.key}
+                    href={s.url!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display:'inline-flex', alignItems:'center', gap:'6px', padding:'7px 14px', borderRadius:'20px', fontSize:'13px', fontFamily:'Outfit,sans-serif', textDecoration:'none', color:T.text2, border:`1px solid ${T.border}`, background:'transparent', transition:'all .15s' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = ac; (e.currentTarget as HTMLElement).style.color = ac }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = T.border; (e.currentTarget as HTMLElement).style.color = T.text2 }}
+                  >
+                    <span style={{ fontSize:'14px' }}>{s.icon}</span>
+                    {s.label}
+                  </a>
+                ))}
+                {customLinks.map((l: CustomLink, i: number) => (
+                  <a key={i}
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display:'inline-flex', alignItems:'center', gap:'6px', padding:'7px 14px', borderRadius:'20px', fontSize:'13px', fontFamily:'Outfit,sans-serif', textDecoration:'none', border:`1px solid ${ac}40`, color:ac, background:`${ac}08`, transition:'all .15s' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `${ac}18` }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = `${ac}08` }}
+                  >
+                    <span style={{ fontSize:'12px' }}>↗</span>
+                    {l.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── FOOTER ── */}
-        <div style={{ padding:'18px clamp(20px,5vw,60px)', textAlign:'center', fontSize:'10.5px', fontFamily:'DM Mono,monospace', color:T.text3, borderTop:`1px solid ${T.border}`, background:T.bg }}>
+        <div style={{ padding:'16px clamp(16px,3vw,40px)', textAlign:'center', fontSize:'10.5px', fontFamily:'DM Mono,monospace', color:T.text3, borderTop:`1px solid ${T.border}`, background:T.bg }}>
           © {new Date().getFullYear()} {name} · Powered by ScoreForge
         </div>
 
