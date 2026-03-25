@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { trackEvent } from '@/lib/utils/analytics'
 import type { PortfolioWithContent, Profile } from '@/lib/supabase/types'
 import AudioPlayer from '@/components/player/AudioPlayer'
@@ -77,15 +78,33 @@ function ContactModal({ open, onClose, accentColor, T, email }: {
 }
 
 // ── Componente principale ─────────────────────────────────────
-export default function LandingPage({ portfolio, profile, preview }: Props) {
+function LandingPageInner({ portfolio, profile, preview }: Props) {
   const T  = THEMES[portfolio.theme as keyof typeof THEMES] || THEMES.dark
   const ac = portfolio.accent_color || '#c8a45a'
-  const [contactOpen, setContactOpen] = useState(false)
+  const [contactOpen,  setContactOpen]  = useState(false)
+  const [shareLinkId,  setShareLinkId]  = useState<string | undefined>(undefined)
+  const searchParams = useSearchParams()
 
-  // Traccia visualizzazione landing page
+  // Risolve il parametro ?ref=alias nello share_link_id reale
+  // e traccia la visualizzazione della landing page
   useEffect(() => {
-    trackEvent({ portfolio_id: portfolio.id, event_type: 'view' })
-  }, [portfolio.id])
+    const ref = searchParams?.get('ref')
+    async function resolveAndTrack() {
+      let linkId: string | undefined
+      if (ref) {
+        try {
+          const res = await fetch(`/api/share-links/resolve?alias=${encodeURIComponent(ref)}`)
+          if (res.ok) {
+            const data = await res.json()
+            linkId = data.id
+            setShareLinkId(linkId)
+          }
+        } catch {}
+      }
+      trackEvent({ portfolio_id: portfolio.id, event_type: 'view', share_link_id: linkId })
+    }
+    resolveAndTrack()
+  }, [portfolio.id, searchParams])
 
   const name             = profile.name                || 'Artista'
   const email            = profile.public_email        || ''
@@ -135,7 +154,7 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
             </div>
             <div style={{ display:'flex', gap:'8px', flexShrink:0 }}>
               {email && (
-                <button onClick={()=>{ setContactOpen(true); trackEvent({ portfolio_id: portfolio.id, event_type: 'contact_click' }) }} style={{ padding:'8px 18px', borderRadius:'6px', background:ac, color:'#09090f', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'Outfit,sans-serif' }}>
+                <button onClick={()=>{ setContactOpen(true); trackEvent({ portfolio_id: portfolio.id, event_type: 'contact_click', share_link_id: shareLinkId }) }} style={{ padding:'8px 18px', borderRadius:'6px', background:ac, color:'#09090f', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'Outfit,sans-serif' }}>
                   Contattami
                 </button>
               )}
@@ -256,7 +275,7 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
               <h2 style={h2s}>Ascolta il mio lavoro</h2>
               <div style={{ display:'flex', flexDirection:'column', gap:'8px', marginTop:'14px' }}>
                 {portfolio.tracks.map(t => (
-                  <AudioPlayer key={t.id} track={t} accentColor={ac} theme={portfolio.theme as 'dark'|'ivory'|'neon'} portfolioId={portfolio.id} />
+                  <AudioPlayer key={t.id} track={t} accentColor={ac} theme={portfolio.theme as 'dark'|'ivory'|'neon'} portfolioId={portfolio.id} shareLinkId={shareLinkId} />
                 ))}
               </div>
             </div>
@@ -356,5 +375,14 @@ export default function LandingPage({ portfolio, profile, preview }: Props) {
 
       </div>
     </>
+  )
+}
+
+import { Suspense } from 'react'
+export default function LandingPage(props: Props) {
+  return (
+    <Suspense fallback={null}>
+      <LandingPageInner {...props} />
+    </Suspense>
   )
 }
