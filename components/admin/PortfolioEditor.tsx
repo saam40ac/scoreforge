@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { Plus, X, ChevronLeft, Eye, Save } from 'lucide-react'
 import type { PortfolioWithContent } from '@/lib/supabase/types'
 import AudioUploader from './AudioUploader'
+import VideoManager from './VideoManager'
 
 const ACCENT_COLORS = ['#c8a45a','#c94b4b','#4b8bc9','#4bb87a','#9b71c9','#e67e22']
 const THEMES = [
@@ -34,6 +35,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
   const [description, setDescription] = useState(portfolio?.description ?? '')
   const [bio,         setBio]         = useState(portfolio?.bio         ?? '')
   const [videoUrl,    setVideoUrl]    = useState(portfolio?.video_url   ?? '')
+  const [videoUrls,   setVideoUrls]   = useState<string[]>((portfolio as any)?.video_urls ?? [])
   const [status,      setStatus]      = useState(portfolio?.status      ?? 'draft')
   const [theme,       setTheme]       = useState(portfolio?.theme       ?? 'dark')
   const [accentColor, setAccentColor] = useState(portfolio?.accent_color ?? '#c8a45a')
@@ -64,7 +66,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
         const { data, error } = await supabase.from('portfolios').insert({
           owner_id: userId, title, slug, status: status as 'draft'|'published'|'private',
           theme: theme as 'dark'|'ivory'|'neon', accent_color: accentColor,
-          target, description, bio, video_url: videoUrl, noindex, downloads_disabled: dlDisabled,
+          target, description, bio, video_url: videoUrl, video_urls: videoUrls, noindex, downloads_disabled: dlDisabled,
         }).select().single()
         if (error) throw error
         portfolioId = data.id
@@ -314,11 +316,14 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
           {/* TAB: MEDIA */}
           {activeTab === 'media' && (
             <div className="space-y-6 animate-fadein">
-              <div>
-                <label className="field-label">Video principale (YouTube / Vimeo embed)</label>
-                <input className="field-input font-mono text-xs" value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/embed/ID_VIDEO" />
-                <p className="field-hint">Incolla l'URL embed. Su YouTube: Condividi → Incorpora → copia solo l'URL src</p>
-              </div>
+              <VideoManager
+                portfolioId={portfolio?.id ?? 'new'}
+                userId={userId}
+                videoUrl={videoUrl}
+                setVideoUrl={setVideoUrl}
+                videoUrls={videoUrls}
+                setVideoUrls={setVideoUrls}
+              />
               {portfolio && (
                 <>
                   <div className="border-t border-[#2a2830] pt-5">
@@ -342,9 +347,9 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
                 <label className="field-label">URL Pubblico</label>
                 <div className="flex gap-2 bg-[#17171f] border border-[#2a2830] rounded-lg px-4 py-2.5 mt-1.5">
                   <span className="flex-1 font-mono text-xs text-[#c8a45a] truncate">
-                    {process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/{slug || 'slug'}
+                    {(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '')}/{slug || 'slug'}
                   </span>
-                  <button onClick={() => { navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_APP_URL || ''}/${slug}`); toast.success('Link copiato!') }} className="text-xs text-[#5a5548] hover:text-[#c8a45a] transition-colors">Copia</button>
+                  <button onClick={() => { navigator.clipboard.writeText(`${(process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '')}/${slug}`); toast.success('Link copiato!') }} className="text-xs text-[#5a5548] hover:text-[#c8a45a] transition-colors">Copia</button>
                 </div>
               </div>
               <div className="card card-sm space-y-0">
