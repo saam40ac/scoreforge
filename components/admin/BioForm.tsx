@@ -3,15 +3,30 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Save, X, Plus, Camera } from 'lucide-react'
+import { Save, X, Plus, Camera, ExternalLink } from 'lucide-react'
 import type { Profile } from '@/lib/supabase/types'
+
+interface CustomLink { label: string; url: string }
+
+const SOCIAL_FIELDS = [
+  { key: 'instagram', label: 'Instagram',  placeholder: 'https://instagram.com/tuonome',  icon: '📸' },
+  { key: 'linkedin',  label: 'LinkedIn',   placeholder: 'https://linkedin.com/in/tuonome', icon: '💼' },
+  { key: 'facebook',  label: 'Facebook',   placeholder: 'https://facebook.com/tuonome',   icon: '👥' },
+  { key: 'spotify',   label: 'Spotify',    placeholder: 'https://open.spotify.com/artist/...', icon: '🎵' },
+  { key: 'youtube',   label: 'YouTube',    placeholder: 'https://youtube.com/@tuocanale', icon: '▶️' },
+  { key: 'vimeo',     label: 'Vimeo',      placeholder: 'https://vimeo.com/tuonome',      icon: '🎬' },
+  { key: 'imdb',      label: 'IMDb',       placeholder: 'https://imdb.com/name/nm...',    icon: '🎞' },
+] as const
+
+type SocialKey = typeof SOCIAL_FIELDS[number]['key']
 
 export default function BioForm({ profile, userId }: { profile: Profile | null; userId: string }) {
   const supabase  = createClient()
   const fileRef   = useRef<HTMLInputElement>(null)
-  const [saving,  setSaving]  = useState(false)
+  const [saving,    setSaving]    = useState(false)
   const [uploading, setUploading] = useState(false)
 
+  // Dati base
   const [name,      setName]      = useState(profile?.name               ?? '')
   const [title,     setTitle]     = useState(profile?.professional_title ?? '')
   const [city,      setCity]      = useState(profile?.city               ?? '')
@@ -23,103 +38,105 @@ export default function BioForm({ profile, userId }: { profile: Profile | null; 
   const [newSkill,  setNewSkill]  = useState('')
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url        ?? '')
 
+  // Social links
+  const [socials, setSocials] = useState<Record<SocialKey, string>>({
+    instagram: (profile as any)?.instagram ?? '',
+    linkedin:  (profile as any)?.linkedin  ?? '',
+    facebook:  (profile as any)?.facebook  ?? '',
+    spotify:   (profile as any)?.spotify   ?? '',
+    youtube:   (profile as any)?.youtube   ?? '',
+    vimeo:     (profile as any)?.vimeo     ?? '',
+    imdb:      (profile as any)?.imdb      ?? '',
+  })
+
+  // Custom links
+  const [customLinks, setCustomLinks] = useState<CustomLink[]>(
+    (profile as any)?.custom_links ?? []
+  )
+  const [newLinkLabel, setNewLinkLabel] = useState('')
+  const [newLinkUrl,   setNewLinkUrl]   = useState('')
+
   const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'A'
 
-  // ── Upload foto profilo ──────────────────────────────────────
+  // ── Upload avatar ────────────────────────────────────────
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 5 * 1024 * 1024) { toast.error('Immagine troppo grande. Max 5 MB.'); return }
-
     setUploading(true)
     const ext  = file.name.split('.').pop()
     const path = `${userId}/avatar/profile.${ext}`
-
-    // Rimuovi vecchio avatar se esiste
-    await supabase.storage.from('scoreforge-media').remove([`${userId}/avatar/profile.jpg`, `${userId}/avatar/profile.png`, `${userId}/avatar/profile.webp`])
-
+    await supabase.storage.from('scoreforge-media').remove([
+      `${userId}/avatar/profile.jpg`,
+      `${userId}/avatar/profile.png`,
+      `${userId}/avatar/profile.webp`,
+    ])
     const { data, error } = await supabase.storage
       .from('scoreforge-media')
       .upload(path, file, { upsert: true, cacheControl: '3600' })
-
     if (error) { toast.error('Errore upload foto.'); setUploading(false); return }
-
     const { data: urlData } = supabase.storage.from('scoreforge-media').getPublicUrl(data.path)
-    const url = urlData.publicUrl + '?t=' + Date.now() // cache-bust
-
+    const url = urlData.publicUrl + '?t=' + Date.now()
     setAvatarUrl(url)
-    // Salva subito l'avatar nel profilo
     await supabase.from('profiles').upsert({ id: userId, avatar_url: url })
     toast.success('Foto profilo aggiornata!')
     setUploading(false)
   }
 
+  // ── Salva tutto ──────────────────────────────────────────
   async function handleSave() {
     setSaving(true)
     const { error } = await supabase.from('profiles').upsert({
-      id: userId, name, professional_title: title, city,
-      public_email: email, website, short_bio: shortBio,
-      long_bio: longBio, skills, avatar_url: avatarUrl,
+      id: userId,
+      name, professional_title: title, city,
+      public_email: email, website,
+      short_bio: shortBio, long_bio: longBio,
+      skills, avatar_url: avatarUrl,
+      ...socials,
+      custom_links: customLinks,
     })
     setSaving(false)
     error ? toast.error('Errore durante il salvataggio.') : toast.success('Profilo salvato!')
   }
 
-  function addSkill() {
-    const s = newSkill.trim()
-    if (!s || skills.includes(s)) return
-    setSkills(prev => [...prev, s])
-    setNewSkill('')
+  // ── Custom links ─────────────────────────────────────────
+  function addCustomLink() {
+    if (!newLinkLabel.trim() || !newLinkUrl.trim()) return
+    let url = newLinkUrl.trim()
+    if (!url.startsWith('http')) url = 'https://' + url
+    setCustomLinks(prev => [...prev, { label: newLinkLabel.trim(), url }])
+    setNewLinkLabel(''); setNewLinkUrl('')
+  }
+  function removeCustomLink(i: number) {
+    setCustomLinks(prev => prev.filter((_, idx) => idx !== i))
   }
 
   return (
     <div className="space-y-5">
 
-      {/* Avatar + azioni */}
+      {/* Avatar + header */}
       <div className="card card-sm flex items-center gap-5">
         <div className="relative flex-shrink-0">
-          {/* Input file nascosto */}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-            onChange={handleAvatarUpload}
-          />
-          {/* Foto o iniziali */}
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarUpload} />
           {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={name}
-              className="w-20 h-20 rounded-full object-cover border-2 border-[#c8a45a]/40"
-            />
+            <img src={avatarUrl} alt={name} className="w-20 h-20 rounded-full object-cover" style={{ border:'2px solid var(--sf-gold)' }} />
           ) : (
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#c8a45a] to-[#e2c47e] flex items-center justify-center font-serif text-3xl font-semibold text-[#09090f] border-2 border-[#c8a45a]/40">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center font-serif text-3xl font-semibold"
+              style={{ background:'linear-gradient(135deg,var(--sf-gold),var(--sf-gold2))', color:'var(--sf-bg)', border:'2px solid var(--sf-gold)' }}>
               {initials}
             </div>
           )}
-          {/* Pulsante camera sovrapposto */}
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#c8a45a] flex items-center justify-center cursor-pointer border-2 border-[#09090f] hover:bg-[#e2c47e] transition-colors disabled:opacity-60"
-            title="Cambia foto"
-          >
-            {uploading
-              ? <span className="text-[#09090f] text-[9px] font-mono">…</span>
-              : <Camera size={12} className="text-[#09090f]" />
-            }
+          <button onClick={() => fileRef.current?.click()} disabled={uploading}
+            className="absolute bottom-0 right-0 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer border-2 transition-colors disabled:opacity-60"
+            style={{ background:'var(--sf-gold)', borderColor:'var(--sf-bg)', color:'var(--sf-bg)' }}>
+            {uploading ? <span className="text-[9px] font-mono">…</span> : <Camera size={12} />}
           </button>
         </div>
-
         <div className="flex-1 min-w-0">
-          <div className="font-serif text-xl text-[#f0ebe0]">{name || 'Il tuo nome'}</div>
-          <div className="text-xs text-[#5a5548] mt-0.5">{title || 'Titolo professionale'}</div>
-          <div className="text-[10px] text-[#5a5548] font-mono mt-2">
-            JPG, PNG, WebP · max 5 MB · clicca sull&apos;icona fotocamera
-          </div>
+          <div className="font-serif text-xl" style={{ color:'var(--sf-text)' }}>{name || 'Il tuo nome'}</div>
+          <div className="text-xs mt-0.5" style={{ color:'var(--sf-text3)' }}>{title || 'Titolo professionale'}</div>
+          <div className="text-[10px] font-mono mt-2" style={{ color:'var(--sf-text3)' }}>JPG, PNG, WebP · max 5 MB · icona fotocamera</div>
         </div>
-
         <button onClick={handleSave} disabled={saving} className="btn btn-gold btn-sm self-start disabled:opacity-60">
           <Save size={13} /> {saving ? 'Salvo…' : 'Salva'}
         </button>
@@ -127,14 +144,14 @@ export default function BioForm({ profile, userId }: { profile: Profile | null; 
 
       {/* Dati personali */}
       <div className="card">
-        <div className="text-sm font-medium mb-4">Dati personali</div>
+        <div className="text-sm font-medium mb-4" style={{ color:'var(--sf-text)' }}>Dati personali</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
-            { label:'Nome completo',        val:name,    set:setName,    ph:'Andrea Pagliara',          span:false },
+            { label:'Nome completo',        val:name,    set:setName,    ph:'Andrea Pagliara',              span:false },
             { label:'Titolo professionale', val:title,   set:setTitle,   ph:'Compositore · Film · Musical', span:false },
-            { label:'Città',               val:city,    set:setCity,    ph:'Bari, Italia',             span:false },
-            { label:'Email pubblica',      val:email,   set:setEmail,   ph:'andrea@pagliara.it',       span:false },
-            { label:'Sito web',            val:website, set:setWebsite, ph:'www.andreapagliara.it',    span:true  },
+            { label:'Città',                val:city,    set:setCity,    ph:'Bari, Italia',                 span:false },
+            { label:'Email pubblica',       val:email,   set:setEmail,   ph:'andrea@pagliara.it',           span:false },
+            { label:'Sito web',             val:website, set:setWebsite, ph:'www.andreapagliara.it',        span:true  },
           ].map(f => (
             <div key={f.label} className={f.span ? 'sm:col-span-2' : ''}>
               <label className="field-label">{f.label}</label>
@@ -146,10 +163,10 @@ export default function BioForm({ profile, userId }: { profile: Profile | null; 
 
       {/* Bio */}
       <div className="card">
-        <div className="text-sm font-medium mb-4">Biografie</div>
+        <div className="text-sm font-medium mb-4" style={{ color:'var(--sf-text)' }}>Biografie</div>
         <div className="space-y-4">
           <div>
-            <label className="field-label">Bio breve <span className="text-[#3a3648] normal-case">(nelle landing page — max 200 caratteri)</span></label>
+            <label className="field-label">Bio breve <span style={{ color:'var(--sf-border2)' }}>(nelle landing page)</span></label>
             <textarea className="field-input field-textarea" value={shortBio} onChange={e => setShortBio(e.target.value)}
               placeholder="Una frase incisiva che descrive chi sei e cosa fai…" style={{ minHeight:80 }} />
             <p className="field-hint">{shortBio.length}/200 caratteri</p>
@@ -162,15 +179,90 @@ export default function BioForm({ profile, userId }: { profile: Profile | null; 
         </div>
       </div>
 
+      {/* Social Links */}
+      <div className="card">
+        <div className="text-sm font-medium mb-1" style={{ color:'var(--sf-text)' }}>Profili Social</div>
+        <p className="text-xs mb-4" style={{ color:'var(--sf-text3)' }}>
+          Appariranno come pulsanti cliccabili su tutte le tue landing page. Lascia vuoti quelli che non usi.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {SOCIAL_FIELDS.map(f => (
+            <div key={f.key}>
+              <label className="field-label flex items-center gap-1.5">
+                <span style={{ fontSize:14 }}>{f.icon}</span> {f.label}
+              </label>
+              <input
+                className="field-input"
+                value={socials[f.key]}
+                onChange={e => setSocials(prev => ({ ...prev, [f.key]: e.target.value }))}
+                placeholder={f.placeholder}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Custom Links */}
+      <div className="card">
+        <div className="text-sm font-medium mb-1" style={{ color:'var(--sf-text)' }}>Link Personalizzati</div>
+        <p className="text-xs mb-4" style={{ color:'var(--sf-text3)' }}>
+          CV su Drive, showreel su Dropbox, cartella stampa, qualsiasi URL — appariranno accanto ai social.
+        </p>
+
+        {/* Lista link aggiunti */}
+        {customLinks.length > 0 && (
+          <div className="space-y-2 mb-4">
+            {customLinks.map((l, i) => (
+              <div key={i} className="flex items-center gap-2 rounded-lg px-3 py-2"
+                style={{ background:'var(--sf-bg3)', border:'1px solid var(--sf-border)' }}>
+                <ExternalLink size={13} style={{ color:'var(--sf-text3)', flexShrink:0 }} />
+                <span className="text-sm font-medium flex-shrink-0" style={{ color:'var(--sf-text)', minWidth:'120px' }}>{l.label}</span>
+                <span className="text-xs font-mono truncate flex-1" style={{ color:'var(--sf-gold)' }}>{l.url}</span>
+                <button onClick={() => removeCustomLink(i)}
+                  className="flex-shrink-0 transition-colors"
+                  style={{ background:'none', border:'none', cursor:'pointer', color:'var(--sf-text3)' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#c94b4b')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--sf-text3)')}>
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Aggiungi nuovo link */}
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_auto] gap-2">
+          <div>
+            <label className="field-label">Etichetta</label>
+            <input className="field-input" value={newLinkLabel} onChange={e => setNewLinkLabel(e.target.value)}
+              placeholder="es. Il mio CV" onKeyDown={e => e.key === 'Enter' && addCustomLink()} />
+          </div>
+          <div>
+            <label className="field-label">URL</label>
+            <input className="field-input" value={newLinkUrl} onChange={e => setNewLinkUrl(e.target.value)}
+              placeholder="https://drive.google.com/..." onKeyDown={e => e.key === 'Enter' && addCustomLink()} />
+          </div>
+          <div className="flex items-end">
+            <button onClick={addCustomLink} disabled={!newLinkLabel.trim() || !newLinkUrl.trim()}
+              className="btn btn-outline w-full justify-center disabled:opacity-40">
+              <Plus size={14} /> Aggiungi
+            </button>
+          </div>
+        </div>
+        <p className="field-hint mt-2">Puoi aggiungere Drive, Dropbox, Box, WeTransfer, qualsiasi servizio cloud.</p>
+      </div>
+
       {/* Competenze */}
       <div className="card">
-        <div className="text-sm font-medium mb-4">Competenze & Software</div>
+        <div className="text-sm font-medium mb-4" style={{ color:'var(--sf-text)' }}>Competenze & Software</div>
         <div className="flex flex-wrap gap-2 mb-4">
-          {skills.length === 0 && <span className="text-sm text-[#5a5548]">Nessuna competenza aggiunta.</span>}
+          {skills.length === 0 && <span className="text-sm" style={{ color:'var(--sf-text3)' }}>Nessuna competenza aggiunta.</span>}
           {skills.map((s, i) => (
-            <span key={i} className="flex items-center gap-1.5 px-3 py-1 bg-[#c8a45a]/10 border border-[#c8a45a]/25 rounded-full text-xs text-[#c8a45a]">
+            <span key={i} className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs"
+              style={{ background:'color-mix(in srgb,var(--sf-gold) 10%,transparent)', border:'1px solid color-mix(in srgb,var(--sf-gold) 25%,transparent)', color:'var(--sf-gold)' }}>
               {s}
-              <button onClick={() => setSkills(prev => prev.filter((_, idx) => idx !== i))} className="opacity-50 hover:opacity-100 transition-opacity">
+              <button onClick={() => setSkills(prev => prev.filter((_, idx) => idx !== i))}
+                style={{ background:'none', border:'none', cursor:'pointer', opacity:.6, display:'flex' }}>
                 <X size={11} />
               </button>
             </span>
@@ -179,9 +271,10 @@ export default function BioForm({ profile, userId }: { profile: Profile | null; 
         <div className="flex gap-2">
           <input className="field-input flex-1" value={newSkill}
             onChange={e => setNewSkill(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addSkill()}
+            onKeyDown={e => { if (e.key === 'Enter' && newSkill.trim()) { setSkills(p => [...p, newSkill.trim()]); setNewSkill('') } }}
             placeholder="es. Logic Pro X, Sibelius, Orchestrazione…" />
-          <button onClick={addSkill} className="btn btn-outline"><Plus size={14} /> Aggiungi</button>
+          <button onClick={() => { if (newSkill.trim()) { setSkills(p => [...p, newSkill.trim()]); setNewSkill('') } }}
+            className="btn btn-outline"><Plus size={14} /> Aggiungi</button>
         </div>
       </div>
 
