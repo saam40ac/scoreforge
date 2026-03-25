@@ -48,7 +48,7 @@ export default async function PublicPortfolioPage({ params }: Props) {
   // Carica il profilo dell'artista proprietario del portfolio
   const { data: profileData } = await supabase
     .from('profiles')
-    .select('name, public_email, website, short_bio, avatar_url, professional_title')
+    .select('name, public_email, website, short_bio, avatar_url, professional_title, instagram, linkedin, facebook, spotify, youtube, vimeo, imdb, custom_links')
     .eq('id', portfolio.owner_id)
     .maybeSingle()
 
