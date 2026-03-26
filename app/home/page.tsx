@@ -91,14 +91,11 @@ function LandingPage({ plans }: { plans: any[] }) {
         }
 
         .reveal {
-          opacity: 0;
-          transform: translateY(28px);
-          transition: opacity .8s ease, transform .8s ease;
+          animation: fadeUp .9s ease both;
         }
-        .reveal.visible {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        .reveal:nth-child(1) { animation-delay: .1s; }
+        .reveal:nth-child(2) { animation-delay: .2s; }
+        .reveal:nth-child(3) { animation-delay: .3s; }
 
         /* ── Utility ── */
         .container { max-width: 1100px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 52px); }
@@ -793,14 +790,7 @@ function LandingPage({ plans }: { plans: any[] }) {
         </div>
       </footer>
 
-      {/* Scroll reveal script */}
-      <script dangerouslySetInnerHTML={{ __html: `
-        const obs = new IntersectionObserver(
-          entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } }),
-          { threshold: 0.12 }
-        );
-        document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
-      `}} />
+      {/* Scroll reveal: handled via CSS animation */}
     </>
   )
 }
