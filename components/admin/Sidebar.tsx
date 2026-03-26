@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { LogoSidebar } from '@/components/brand/Logo'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -70,10 +71,14 @@ export default function Sidebar({ userName, userEmail, onClose }: Props) {
       {/* Logo */}
       <div style={s.logo}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={s.logoMark}>
-            <div style={s.logoIcon}>S</div>
-            ScoreForge
-          </div>
+          <LogoSidebar c={{
+            arc1: 'var(--sf-gold2, #e2c47e)',
+            arc2: 'var(--sf-gold, #c8a45a)',
+            text: 'var(--sf-text, #f0ebe0)',
+            forge: 'var(--sf-gold, #c8a45a)',
+            line: 'var(--sf-border, #2a2830)',
+            dash: 'var(--sf-gold, #c8a45a)',
+          }} />
           {onClose && (
             <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sf-text3)', padding: '2px' }} className="lg:hidden">
               <X size={17} />
