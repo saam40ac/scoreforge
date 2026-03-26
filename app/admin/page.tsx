@@ -64,9 +64,7 @@ export default async function SuperAdminOverview() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '28px' }}>
         {kpi.map(k => (
           <Link key={k.label} href={k.href} style={{ textDecoration: 'none' }}>
-            <div style={{ background: '#0f0f1a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '18px 20px', transition: 'border-color .15s', cursor: 'pointer' }}
-              onMouseEnter={(e: any) => e.currentTarget.style.borderColor = k.color + '60'}
-              onMouseLeave={(e: any) => e.currentTarget.style.borderColor = '#1e1e2e'}>
+            <div style={{ background: '#0f0f1a', border: `1px solid ${k.color}30`, borderRadius: '12px', padding: '18px 20px', cursor: 'pointer' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                 <k.icon size={15} color={k.color} />
                 <span style={{ fontSize: '10px', color: '#5a5548', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '.1em' }}>{k.label}</span>
