@@ -5,15 +5,15 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
-const PLAN_META: Record<string, { label: string; color: string; desc: string }> = {
-  free:       { label: 'Free',       color: '#5a5548', desc: '1 portfolio · 10 tracce · 500 MB' },
-  pro:        { label: 'Pro',        color: '#c8a45a', desc: '5 portfolio · 100 tracce · 5 GB' },
-  studio:     { label: 'Studio',     color: '#e2c47e', desc: '20 portfolio · 500 tracce · 20 GB' },
-  enterprise: { label: 'Enterprise', color: '#f5e4b8', desc: 'Portfolio illimitati · Storage illimitato' },
+const PLAN_COLORS: Record<string, string> = {
+  free: '#5a5548', pro: '#c8a45a', studio: '#e2c47e', enterprise: '#f5e4b8',
 }
 
-export default function SettingsClient({ email, userId, plan }: { email: string; userId: string; plan: string }) {
-  const planInfo = PLAN_META[plan] ?? PLAN_META['free']
+export default function SettingsClient({ email, userId, plan, planLabel, planDesc }: {
+  email: string; userId: string; plan: string; planLabel?: string; planDesc?: string
+}) {
+  const planColor = PLAN_COLORS[plan] ?? PLAN_COLORS['free']
+  const planInfo = { label: planLabel || plan, color: planColor, desc: planDesc || '' }
   const supabase = createClient()
   const router   = useRouter()
   const [newPass,    setNewPass]    = useState('')
