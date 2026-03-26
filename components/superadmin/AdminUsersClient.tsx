@@ -41,8 +41,14 @@ export default function AdminUsersClient({ users: initialUsers, portfolioCounts 
 
   async function updateUser(id: string, updates: Partial<User>) {
     setSaving(true)
-    const { error } = await supabase.from('profiles').update(updates).eq('id', id)
-    if (error) { toast.error('Errore: ' + error.message); setSaving(false); return }
+    // Usa la API route con service role per bypassare RLS
+    const res = await fetch('/api/admin/update-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: id, updates }),
+    })
+    const data = await res.json()
+    if (!res.ok) { toast.error(data.error || 'Errore aggiornamento'); setSaving(false); return }
     setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u))
     toast.success('Utente aggiornato.')
     setSaving(false)
