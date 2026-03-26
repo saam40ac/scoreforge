@@ -5,7 +5,15 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
-export default function SettingsClient({ email, userId }: { email: string; userId: string }) {
+const PLAN_META: Record<string, { label: string; color: string; desc: string }> = {
+  free:       { label: 'Free',       color: '#5a5548', desc: '1 portfolio · 10 tracce · 500 MB' },
+  pro:        { label: 'Pro',        color: '#c8a45a', desc: '5 portfolio · 100 tracce · 5 GB' },
+  studio:     { label: 'Studio',     color: '#e2c47e', desc: '20 portfolio · 500 tracce · 20 GB' },
+  enterprise: { label: 'Enterprise', color: '#f5e4b8', desc: 'Portfolio illimitati · Storage illimitato' },
+}
+
+export default function SettingsClient({ email, userId, plan }: { email: string; userId: string; plan: string }) {
+  const planInfo = PLAN_META[plan] ?? PLAN_META['free']
   const supabase = createClient()
   const router   = useRouter()
   const [newPass,    setNewPass]    = useState('')
@@ -45,8 +53,11 @@ export default function SettingsClient({ email, userId }: { email: string; userI
         <Row label="Email" desc={email}>
           <span className="text-xs font-mono text-[#5a5548]">{email}</span>
         </Row>
-        <Row label="Piano attivo" desc="ScoreForge · Hobby (sviluppo)">
-          <span className="text-xs px-2.5 py-1 bg-[#c8a45a]/10 text-[#c8a45a] border border-[#c8a45a]/25 rounded-full font-mono">hobby</span>
+        <Row label="Piano attivo" desc={`ScoreForge · ${planInfo.desc}`}>
+          <span className="text-xs px-2.5 py-1 rounded-full font-mono"
+            style={{ background: planInfo.color + '18', color: planInfo.color, border: `1px solid ${planInfo.color}44` }}>
+            {planInfo.label}
+          </span>
         </Row>
       </div>
 
