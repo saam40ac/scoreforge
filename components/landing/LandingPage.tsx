@@ -433,7 +433,14 @@ function LandingPageInner({ portfolio, profile, preview }: Props) {
 
         {/* ── FOOTER ── */}
         <div style={{ padding:'16px clamp(16px,3vw,40px)', textAlign:'center', fontSize:'10.5px', fontFamily:'DM Mono,monospace', color:T.text3, borderTop:`1px solid ${T.border}`, background:T.bg }}>
-          © {new Date().getFullYear()} {name} · Powered by ScoreForge
+          <div style={{ marginBottom:'8px' }}>
+            © {new Date().getFullYear()} {name} · Powered by ScoreForge
+          </div>
+          <div style={{ display:'flex', gap:'16px', justifyContent:'center', flexWrap:'wrap', opacity:.6 }}>
+            <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" style={{ color:T.text3, textDecoration:'none' }}>Privacy Policy</a>
+            <a href="/legal/cookie" target="_blank" rel="noopener noreferrer" style={{ color:T.text3, textDecoration:'none' }}>Cookie Policy</a>
+            <a href="/legal/termini" target="_blank" rel="noopener noreferrer" style={{ color:T.text3, textDecoration:'none' }}>Termini di Servizio</a>
+          </div>
         </div>
 
       </div>
