@@ -3,7 +3,7 @@ import './globals.css'
 import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
-  title: 'ScoreForge — Composer Portfolio Platform',
+  title: 'ScoreForge — Artist Portfolio Platform',
   description: 'La piattaforma per i compositori di musiche originali.',
 }
 
