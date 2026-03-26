@@ -90,6 +90,6 @@ export const config = {
      * - pagine legali (pubbliche)
      * - API routes analytics (chiamate dalla landing pubblica non autenticata)
      */
-    '/((?!_next/static|_next/image|favicon\\.ico|icon\\.svg|apple-icon\\.svg|legal|api/analytics|api/share-links).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|icon\\.svg|apple-icon\\.svg|legal|register|home|api/analytics|api/share-links|api/webhook).*)',
   ],
 }
