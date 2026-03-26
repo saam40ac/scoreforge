@@ -103,7 +103,7 @@ function LogoLogin({ c }: { c: typeof C.dark }) {
         </div>
         <div style={{ width: '120px', height: '0.5px', background: c.line }} />
         <div style={{ fontSize: '8px', color: c.dash, opacity: 0.5, letterSpacing: '.2em', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif" }}>
-          Composer Portfolio Platform
+          Artist Portfolio Platform
         </div>
       </div>
     </div>
