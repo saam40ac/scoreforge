@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Sfondo scuro arrotondato -->
+  <rect width="32" height="32" rx="7" fill="#07070d"/>
+  <!-- Icona S: arco superiore -->
+  <path d="M20,4 Q28,3.5 28,10.5 Q28,17 20,17" fill="none" stroke="#e2c47e" stroke-width="2.8" stroke-linecap="round"/>
+  <!-- Icona S: arco inferiore -->
+  <path d="M12,17 Q4,17 4,23 Q4,29.5 12,28.5" fill="none" stroke="#c8a45a" stroke-width="2.8" stroke-linecap="round"/>
+  <!-- Icona S: tratto centrale -->
+  <line x1="12" y1="17" x2="20" y2="17" stroke="#e2c47e" stroke-width="2.8" stroke-linecap="round"/>
+</svg>
