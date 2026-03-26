@@ -47,6 +47,21 @@ export default function LoginPage() {
           }} />
         </div>
 
+        {/* Legal links */}
+        <div className="flex justify-center gap-5 mb-5">
+          {[
+            { href: '/legal/privacy', label: 'Privacy' },
+            { href: '/legal/cookie',  label: 'Cookie' },
+            { href: '/legal/termini', label: 'Termini' },
+          ].map(l => (
+            <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer"
+              className="text-[10px] font-mono tracking-widest uppercase"
+              style={{ color: '#3a3648', textDecoration: 'none' }}>
+              {l.label}
+            </a>
+          ))}
+        </div>
+
         {/* Card login */}
         <div className="card">
           <h1 className="font-serif text-2xl font-light text-center mb-1">Accedi</h1>
