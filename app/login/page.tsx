@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { LogoLogin } from '@/components/brand/Logo'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -35,16 +36,15 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm px-5 animate-fadein relative">
         {/* Logo */}
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#c8a45a] to-[#e2c47e] flex items-center justify-center font-serif text-xl font-semibold text-[#09090f]">
-              S
-            </div>
-            <span className="font-serif text-4xl text-[#e2c47e] font-light">ScoreForge</span>
-          </div>
-          <p className="text-[10px] text-[#5a5548] tracking-[0.2em] uppercase font-mono">
-            Composer Portfolio Platform
-          </p>
+        <div className="flex justify-center mb-10">
+          <LogoLogin c={{
+            arc1: '#e2c47e',
+            arc2: '#c8a45a',
+            text: '#f0ebe0',
+            forge: '#c8a45a',
+            line: '#2a2830',
+            dash: '#c8a45a',
+          }} />
         </div>
 
         {/* Card login */}
