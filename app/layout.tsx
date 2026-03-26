@@ -4,7 +4,14 @@ import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
   title: 'ScoreForge — Artist Portfolio Platform',
-  description: 'La piattaforma per i compositori di musiche originali.',
+  description: 'La piattaforma portfolio per artisti creativi.',
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32' },
+    ],
+    apple: { url: '/apple-icon.svg', type: 'image/svg+xml' },
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
