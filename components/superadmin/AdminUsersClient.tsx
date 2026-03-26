@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Search, UserPlus, Shield, AlertTriangle, CheckCircle, XCircle, ChevronDown } from 'lucide-react'
@@ -137,8 +137,8 @@ export default function AdminUsersClient({ users: initialUsers, portfolioCounts 
               const StatusIcon = STATUS_ICONS[u.status] || CheckCircle
               const isExpanded = expanded === u.id
               return (
-                <>
-                  <tr key={u.id} style={{ borderBottom: '1px solid #14141f', cursor: 'pointer' }} onClick={() => setExpanded(isExpanded ? null : u.id)}>
+                <React.Fragment key={u.id}>
+                  <tr style={{ borderBottom: '1px solid #14141f', cursor: 'pointer' }} onClick={() => setExpanded(isExpanded ? null : u.id)}>
                     <td style={{ padding: '11px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {u.avatar_url
@@ -168,7 +168,7 @@ export default function AdminUsersClient({ users: initialUsers, portfolioCounts 
                     <td style={{ padding: '11px 14px' }}><ChevronDown size={13} color="#5a5548" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} /></td>
                   </tr>
                   {isExpanded && (
-                    <tr key={u.id + '-exp'} style={{ borderBottom: '1px solid #1e1e2e' }}>
+                    <tr style={{ borderBottom: '1px solid #1e1e2e' }}>
                       <td colSpan={8} style={{ padding: '14px 20px', background: '#0a0a12' }}>
                         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                           {/* Stato */}
@@ -210,7 +210,7 @@ export default function AdminUsersClient({ users: initialUsers, portfolioCounts 
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               )
             })}
           </tbody>
