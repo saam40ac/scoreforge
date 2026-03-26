@@ -538,7 +538,7 @@ function LandingPage({ plans }: { plans: any[] }) {
           ScoreForge è la piattaforma che trasforma il tuo lavoro artistico in una presenza digitale indimenticabile. Creata da un artista, per gli artisti.
         </p>
         <div className="hero-cta">
-          <a href={`${appUrl}/login`} className="btn-primary">
+          <a href={`${appUrl}/register`} className="btn-primary">
             Inizia gratis
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </a>
@@ -688,7 +688,7 @@ function LandingPage({ plans }: { plans: any[] }) {
                       <li key={fi}>{f}</li>
                     ))}
                   </ul>
-                  <a href={`${appUrl}/login`} className={`plan-cta ${isFeatured ? 'gold' : 'outline'}`}>
+                  <a href={`${appUrl}/register?plan=${p.name}`} className={`plan-cta ${isFeatured ? 'gold' : 'outline'}`}>
                     {p.price_eur === 0 ? 'Inizia gratis' : 'Scegli questo piano'}
                   </a>
                 </div>
@@ -737,7 +737,7 @@ function LandingPage({ plans }: { plans: any[] }) {
                 Insieme a suo padre Angelo, hanno deciso di costruire <strong>la piattaforma che avrebbero voluto usare</strong> — e di renderla disponibile a tutti gli artisti che condividono la stessa esigenza.
               </p>
               <div style={{ marginTop: 36, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                <a href={`${appUrl}/login`} className="btn-primary">Prova ScoreForge gratis</a>
+                <a href={`${appUrl}/register`} className="btn-primary">Prova ScoreForge gratis</a>
               </div>
             </div>
           </div>
@@ -756,7 +756,7 @@ function LandingPage({ plans }: { plans: any[] }) {
           <p style={{ color: 'var(--muted)', fontSize: 16, maxWidth: 480, margin: '0 auto 36px', lineHeight: 1.8 }}>
             Ogni giorno registi, produttori e supervisori musicali cercano compositori. Assicurati che quando trovano il tuo nome, trovino anche il tuo meglio.
           </p>
-          <a href={`${appUrl}/login`} className="btn-primary" style={{ fontSize: 16, padding: '16px 44px' }}>
+          <a href={`${appUrl}/register`} className="btn-primary" style={{ fontSize: 16, padding: '16px 44px' }}>
             Crea il tuo portfolio gratis
           </a>
           <p style={{ color: 'var(--faint)', fontSize: 12, marginTop: 16, fontFamily: 'var(--mono)' }}>
@@ -785,7 +785,7 @@ function LandingPage({ plans }: { plans: any[] }) {
             <a href="/legal/privacy">Privacy Policy</a>
             <a href="/legal/cookie">Cookie Policy</a>
             <a href="/legal/termini">Termini di Servizio</a>
-            <a href={`${appUrl}/login`}>Accedi</a>
+            <a href={`${appUrl}/register`}>Registrati</a>
           </div>
         </div>
       </footer>
