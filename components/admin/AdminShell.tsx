@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
+import { LogoIcon } from '@/components/brand/Logo'
 import { ThemeProvider, useTheme } from './ThemeProvider'
 
 function ThemeToggle() {
@@ -97,12 +98,16 @@ function Shell({ children, userName, userEmail }: {
           </button>
 
           {/* Logo mobile */}
-          <span
-            className="lg:hidden"
-            style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', color: 'var(--sf-gold2)' }}
-          >
-            ScoreForge
-          </span>
+          <div className="lg:hidden">
+            <LogoIcon c={{
+              arc1: 'var(--sf-gold2, #e2c47e)',
+              arc2: 'var(--sf-gold, #c8a45a)',
+              text: 'var(--sf-text)',
+              forge: 'var(--sf-gold)',
+              line: 'var(--sf-border)',
+              dash: 'var(--sf-gold)',
+            }} size={28} />
+          </div>
 
           {/* Spacer */}
           <div style={{ flex: 1 }} />
