@@ -11,6 +11,15 @@ export default async function SettingsPage() {
     .eq('id', user!.id)
     .single()
 
+  const currentPlan = (profile as any)?.plan ?? 'free'
+
+  // Leggi i dettagli del piano dalla tabella (non hardcoded)
+  const { data: planData } = await supabase
+    .from('subscription_plans')
+    .select('label, price_eur, max_portfolios, max_tracks, max_storage_mb')
+    .eq('name', currentPlan)
+    .single()
+
   return (
     <div className="p-6 lg:p-8">
       <div className="mb-8">
@@ -21,7 +30,11 @@ export default async function SettingsPage() {
         <SettingsClient
           email={user?.email ?? ''}
           userId={user!.id}
-          plan={(profile as any)?.plan ?? 'free'}
+          plan={currentPlan}
+          planLabel={(planData as any)?.label ?? currentPlan}
+          planDesc={planData
+            ? `${(planData as any).max_portfolios} portfolio · ${(planData as any).max_tracks} tracce · ${Math.round((planData as any).max_storage_mb / 1024) >= 1 ? Math.round((planData as any).max_storage_mb / 1024) + ' GB' : (planData as any).max_storage_mb + ' MB'} storage`
+            : ''}
         />
       </div>
     </div>
