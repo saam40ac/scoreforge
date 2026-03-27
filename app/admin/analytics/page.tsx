@@ -3,30 +3,32 @@ import { createClient } from '@/lib/supabase/server'
 export default async function AdminAnalyticsPage() {
   const supabase = await createClient()
 
-  const [
-    { data: dailyEvents },
-    { data: topPortfolios },
-    { data: geoData },
-    { data: browserData },
-  ] = await Promise.all([
+  const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
+  const [r1, r2, r3, r4] = await Promise.all([
     supabase.from('analytics_events')
       .select('event_type, created_at')
-      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+      .gte('created_at', since30d)
       .order('created_at', { ascending: false })
       .limit(5000),
     supabase.from('analytics_events')
       .select('portfolio_id, event_type')
       .eq('event_type', 'view')
-      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+      .gte('created_at', since30d),
     supabase.from('analytics_events')
       .select('country')
-      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+      .gte('created_at', since30d)
       .not('country', 'is', null),
     supabase.from('analytics_events')
       .select('user_agent_short')
-      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+      .gte('created_at', since30d)
       .not('user_agent_short', 'is', null),
   ])
+
+  const dailyEvents  = (r1.data  || []) as { event_type: string; created_at: string }[]
+  const topPortfolios = (r2.data || []) as { portfolio_id: string; event_type: string }[]
+  const geoData      = (r3.data  || []) as { country: string }[]
+  const browserData  = (r4.data  || []) as { user_agent_short: string }[]
 
   // Aggregazioni server-side
   const byDay: Record<string,{views:number;plays:number}> = {}
