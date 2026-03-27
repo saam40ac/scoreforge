@@ -48,12 +48,15 @@ export default async function AdminAnalyticsPage() {
   topPortfolios?.forEach(e => { pCounts[e.portfolio_id] = (pCounts[e.portfolio_id] || 0) + 1 })
   const topPIds = Object.entries(pCounts).sort((a,b) => b[1]-a[1]).slice(0,10)
 
-  const { data: topPData } = await supabase.from('portfolios')
+  const { data: topPDataRaw } = await supabase.from('portfolios')
     .select('id, title, slug, owner_id')
     .in('id', topPIds.map(([id]) => id))
-  const { data: topOwners } = await supabase.from('profiles')
-    .select('id, name').in('id', (topPData || []).map(p => p.owner_id))
-  const ownerMap = Object.fromEntries((topOwners || []).map(o => [o.id, o.name]))
+  const topPData = (topPDataRaw || []) as { id: string; title: string; slug: string; owner_id: string }[]
+
+  const { data: topOwnersRaw } = await supabase.from('profiles')
+    .select('id, name').in('id', topPData.map(p => p.owner_id))
+  const topOwners = (topOwnersRaw || []) as { id: string; name: string }[]
+  const ownerMap = Object.fromEntries(topOwners.map(o => [o.id, o.name]))
 
   const geoCounts: Record<string,number> = {}
   geoData?.forEach(e => { if (e.country) geoCounts[e.country] = (geoCounts[e.country] || 0) + 1 })
