@@ -9,11 +9,12 @@ export default async function AdminContentPage() {
     .select('id, title, slug, status, theme, owner_id, view_count, created_at, updated_at, noindex')
     .order('updated_at', { ascending: false })
 
-  const { data: owners } = await supabase
+  const { data: ownersRaw } = await supabase
     .from('profiles')
     .select('id, name, public_email, status, plan')
+  const owners = (ownersRaw || []) as { id: string; name: string; public_email: string; status: string; plan: string }[]
 
-  const ownerMap = Object.fromEntries((owners || []).map(o => [o.id, o]))
+  const ownerMap = Object.fromEntries(owners.map(o => [o.id, o]))
 
   return (
     <div style={{ padding: '32px' }}>
