@@ -25,7 +25,8 @@ export default async function SuperAdminOverview() {
     supabase.from('tracks').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('plan').then(async ({ data }) => {
       const counts: Record<string, number> = {}
-      data?.forEach(p => { counts[p.plan || 'free'] = (counts[p.plan || 'free'] || 0) + 1 })
+      const rows = (data || []) as { plan: string }[]
+      rows.forEach(p => { counts[p.plan || 'free'] = (counts[p.plan || 'free'] || 0) + 1 })
       return { data: counts }
     }),
     supabase.from('analytics_events').select('event_type, created_at, portfolio_id')
