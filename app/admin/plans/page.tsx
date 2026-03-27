@@ -4,13 +4,15 @@ import AdminPlansClient from '@/components/superadmin/AdminPlansClient'
 export default async function AdminPlansPage() {
   const supabase = await createClient()
 
-  const [{ data: plans }, { data: planCounts }] = await Promise.all([
+  const [r1, r2] = await Promise.all([
     supabase.from('subscription_plans').select('*').order('sort_order'),
     supabase.from('profiles').select('plan'),
   ])
+  const plans = (r1.data || []) as any[]
+  const planCountsRaw = (r2.data || []) as { plan: string }[]
 
   const counts: Record<string,number> = {}
-  planCounts?.forEach(p => { counts[p.plan || 'free'] = (counts[p.plan || 'free'] || 0) + 1 })
+  planCountsRaw.forEach(p => { counts[p.plan || 'free'] = (counts[p.plan || 'free'] || 0) + 1 })
 
   return (
     <div style={{ padding: '32px' }}>
