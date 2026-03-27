@@ -7,11 +7,12 @@ export default async function SuperAdminLayout({ children }: { children: React.R
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: profileRaw } = await supabase
     .from('profiles')
     .select('role, name, public_email')
     .eq('id', user.id)
     .single()
+  const profile = profileRaw as { role: string; name: string; public_email: string } | null
 
   if (!profile || profile.role !== 'super_admin') redirect('/dashboard')
 
