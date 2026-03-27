@@ -4,18 +4,20 @@ import AdminUsersClient from '@/components/superadmin/AdminUsersClient'
 export default async function AdminUsersPage() {
   const supabase = await createClient()
 
-  const { data: users } = await supabase
+  const { data: usersRaw } = await supabase
     .from('profiles')
     .select('id, name, public_email, professional_title, city, role, status, plan, plan_expires_at, notes, created_at, avatar_url')
     .order('created_at', { ascending: false })
+  const users = (usersRaw || []) as any[]
 
-  const { data: portfoliosByUser } = await supabase
+  const { data: portfoliosByUserRaw } = await supabase
     .from('portfolios')
     .select('owner_id, status')
+  const portfoliosByUser = (portfoliosByUserRaw || []) as { owner_id: string; status: string }[]
 
   // Conta portfolio per utente
   const portfolioCounts: Record<string, number> = {}
-  portfoliosByUser?.forEach(p => {
+  portfoliosByUser.forEach(p => {
     portfolioCounts[p.owner_id] = (portfolioCounts[p.owner_id] || 0) + 1
   })
 
