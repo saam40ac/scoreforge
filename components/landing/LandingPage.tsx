@@ -20,6 +20,7 @@ interface Props {
     vimeo?:       string | null
     imdb?:        string | null
     custom_links?: CustomLink[]
+    skills?:       string[]
   }
   preview?: boolean
 }
@@ -123,6 +124,7 @@ function LandingPageInner({ portfolio, profile, preview }: Props) {
   const website          = profile.website             || ''
   const professionalTitle = profile.professional_title || ''
   const customLinks      = profile.custom_links        || []
+  const skills           = profile.skills              || []
 
   // Social links — solo quelli compilati
   const socialLinks = [
@@ -247,6 +249,18 @@ function LandingPageInner({ portfolio, profile, preview }: Props) {
                 <div style={{ flex:1, minWidth:'200px' }}>
                   <h2 style={h2s}>{name}</h2>
                   <p style={body}>{portfolio.bio}</p>
+                  {skills.length > 0 && (
+                    <div style={{ marginTop:'18px', display:'flex', flexWrap:'wrap', gap:'7px' }}>
+                      {skills.map((s: string, i: number) => (
+                        <span key={i} style={{
+                          fontSize:'11px', fontFamily:'DM Mono,monospace',
+                          padding:'4px 12px', borderRadius:'20px',
+                          background:`${ac}12`, border:`1px solid ${ac}35`,
+                          color:ac, letterSpacing:'.04em',
+                        }}>{s}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
