@@ -27,7 +27,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
 
   const { data: profileData } = await supabase
     .from('profiles')
-    .select('name, public_email, website, short_bio, avatar_url, professional_title, instagram, linkedin, facebook, spotify, youtube, vimeo, imdb, custom_links')
+    .select('name, public_email, website, short_bio, avatar_url, professional_title, instagram, linkedin, facebook, spotify, youtube, vimeo, imdb, custom_links, skills')
     .eq('id', user!.id)
     .maybeSingle()
 
