@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    // I tipi Supabase richiedono la generazione CLI per essere precisi.
-    // Gli errori di tipo 'never' sono falsi positivi da query non tipizzate.
     ignoreBuildErrors: true,
   },
   images: {
@@ -12,30 +10,35 @@ const nextConfig = {
       { protocol: 'https', hostname: '*.cloudflare.com' },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/landing.html',
+        permanent: false,
+      },
+    ]
+  },
   async headers() {
     return [
       {
-        // Solo /home e /register possono essere embeddati su Systeme.io
-        source: '/(home|register)(.*)',
+        source: '/landing.html',
         headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'ALLOWALL',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: "frame-ancestors *;",
-          },
+          { key: 'X-Frame-Options', value: 'ALLOWALL' },
+          { key: 'Content-Security-Policy', value: "frame-ancestors *;" },
         ],
       },
       {
-        // Tutte le altre pagine restano protette
-        source: '/((?!home|register).*)',
+        source: '/(home|register)(.*)',
         headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
-          },
+          { key: 'X-Frame-Options', value: 'ALLOWALL' },
+          { key: 'Content-Security-Policy', value: "frame-ancestors *;" },
+        ],
+      },
+      {
+        source: '/((?!home|register|landing.html).*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
         ],
       },
     ]
