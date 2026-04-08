@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { Toaster } from 'sonner'
 
@@ -12,6 +12,18 @@ export const metadata: Metadata = {
     ],
     apple: { url: '/apple-icon.svg', type: 'image/svg+xml' },
   },
+}
+
+// Bug 15 fix: viewport corretto per mobile — elimina lo zoom automatico
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)',  color: '#07070d' },
+    { media: '(prefers-color-scheme: light)', color: '#f5f0e8' },
+  ],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
