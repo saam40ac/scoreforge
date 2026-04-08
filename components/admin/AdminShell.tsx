@@ -3,15 +3,15 @@
 import { useState } from 'react'
 import { Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
-import { LogoIcon, LogoTopbar } from '@/components/brand/Logo'
+import { LogoIcon } from '@/components/brand/Logo'
 import { ThemeProvider, useTheme } from './ThemeProvider'
 
 function ThemeToggle() {
-  const { theme, toggle } = useTheme()
+  const { theme, toggle, isAutomatic } = useTheme()
   return (
     <button
       onClick={toggle}
-      title={theme === 'dark' ? 'Passa al tema chiaro' : 'Passa al tema scuro'}
+      title={isAutomatic ? 'Tema automatico (segue il sistema) — clicca per scegliere' : theme === 'dark' ? 'Passa al tema chiaro' : 'Passa al tema scuro'}
       style={{
         background: 'var(--sf-bg3)',
         border: '1px solid var(--sf-border)',
@@ -29,7 +29,7 @@ function ThemeToggle() {
     >
       <span style={{ fontSize: '14px' }}>{theme === 'dark' ? '☀' : '☾'}</span>
       <span style={{ display: 'none' }} className="sm:inline">
-        {theme === 'dark' ? 'Chiaro' : 'Scuro'}
+        {isAutomatic ? 'Auto' : theme === 'dark' ? 'Chiaro' : 'Scuro'}
       </span>
     </button>
   )
@@ -97,16 +97,16 @@ function Shell({ children, userName, userEmail }: {
             <Menu size={20} />
           </button>
 
-          {/* Logo mobile — versione con testo */}
+          {/* Logo mobile */}
           <div className="lg:hidden">
-            <svg width="100" height="22" viewBox="0 0 110 24">
-              <path d="M16,2 Q22,1.5 22,7 Q22,12.5 16,12.5" fill="none" stroke="var(--sf-gold2, #e2c47e)" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M10,12.5 Q4,12.5 4,17.5 Q4,22.5 10,22" fill="none" stroke="var(--sf-gold, #c8a45a)" strokeWidth="2" strokeLinecap="round"/>
-              <line x1="10" y1="12.5" x2="16" y2="12.5" stroke="var(--sf-gold2, #e2c47e)" strokeWidth="2" strokeLinecap="round"/>
-              <text x="28" y="10" fontFamily="'Cormorant Garamond',serif" fontSize="11" fontWeight="300" fill="var(--sf-text, #f0ebe0)" letterSpacing="1.5">SCORE</text>
-              <line x1="28" y1="13" x2="96" y2="13" stroke="var(--sf-border, #2a2830)" strokeWidth="0.4"/>
-              <text x="28" y="21" fontFamily="'Outfit',sans-serif" fontSize="6.5" fontWeight="500" fill="var(--sf-gold, #c8a45a)" letterSpacing="3.5">FORGE</text>
-            </svg>
+            <LogoIcon c={{
+              arc1: 'var(--sf-gold2, #e2c47e)',
+              arc2: 'var(--sf-gold, #c8a45a)',
+              text: 'var(--sf-text)',
+              forge: 'var(--sf-gold)',
+              line: 'var(--sf-border)',
+              dash: 'var(--sf-gold)',
+            }} size={28} />
           </div>
 
           {/* Spacer */}
