@@ -13,14 +13,12 @@ function ResetForm() {
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
   const [ready,    setReady]    = useState(false)
+  const [done,     setDone]     = useState(false)
 
   useEffect(() => {
-    // Supabase inserisce il token nella hash dell'URL dopo il click sul link
-    // getSession() lo legge automaticamente
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) setReady(true)
     })
-    // Ascolta l'evento PASSWORD_RECOVERY
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') setReady(true)
     })
@@ -35,18 +33,29 @@ function ResetForm() {
     const { error } = await supabase.auth.updateUser({ password })
     setLoading(false)
     if (error) { setError(error.message); return }
-    router.push('/dashboard')
+    // Issue 5 fix: vai al login (non alla dashboard)
+    setDone(true)
+    setTimeout(() => router.push('/login'), 2500)
   }
 
   const iS: React.CSSProperties = {
     width: '100%', background: '#111118', border: '1px solid #2a2830',
     borderRadius: '8px', padding: '11px 14px', color: '#f0ebe0',
     fontSize: '14px', outline: 'none', fontFamily: "'Outfit', sans-serif",
+    transition: 'border-color .2s',
   }
 
   if (!ready) return (
     <div style={{ minHeight: '100vh', background: '#07070d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ fontSize: '13px', color: '#5a5548', fontFamily: 'DM Mono, monospace' }}>Verifica del link in corso…</div>
+    </div>
+  )
+
+  if (done) return (
+    <div style={{ minHeight: '100vh', background: '#07070d', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: "'Outfit', sans-serif" }}>
+      <div style={{ fontSize: '40px', marginBottom: '20px' }}>✓</div>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '26px', fontWeight: 300, color: '#f0ebe0', marginBottom: '10px' }}>Password aggiornata!</h2>
+      <p style={{ fontSize: '13px', color: '#5a5548' }}>Reindirizzamento al login…</p>
     </div>
   )
 
@@ -65,14 +74,8 @@ function ResetForm() {
             </svg>
           </Link>
         </div>
-
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '28px', fontWeight: 300, color: '#f0ebe0', marginBottom: '8px', textAlign: 'center' }}>
-          Nuova password
-        </h1>
-        <p style={{ fontSize: '13px', color: '#5a5548', textAlign: 'center', marginBottom: '28px' }}>
-          Scegli una nuova password sicura.
-        </p>
-
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '28px', fontWeight: 300, color: '#f0ebe0', marginBottom: '8px', textAlign: 'center' }}>Nuova password</h1>
+        <p style={{ fontSize: '13px', color: '#5a5548', textAlign: 'center', marginBottom: '28px' }}>Scegli una nuova password sicura.</p>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
             <label style={{ fontSize: '10px', color: '#5a5548', textTransform: 'uppercase', letterSpacing: '.12em', fontFamily: 'DM Mono, monospace', display: 'block', marginBottom: '6px' }}>Nuova password</label>
@@ -84,13 +87,7 @@ function ResetForm() {
             <input type="password" required style={iS} value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Ripeti la password"
               onFocus={e => (e.target.style.borderColor = '#c8a45a')} onBlur={e => (e.target.style.borderColor = '#2a2830')} />
           </div>
-
-          {error && (
-            <div style={{ background: '#c94b4b18', border: '1px solid #c94b4b44', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#c94b4b' }}>
-              {error}
-            </div>
-          )}
-
+          {error && <div style={{ background: '#c94b4b18', border: '1px solid #c94b4b44', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#c94b4b' }}>{error}</div>}
           <button type="submit" disabled={loading} style={{ padding: '13px', borderRadius: '8px', background: '#c8a45a', color: '#07070d', border: 'none', fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? .7 : 1, fontFamily: "'Outfit', sans-serif" }}>
             {loading ? 'Salvataggio…' : 'Imposta nuova password'}
           </button>
