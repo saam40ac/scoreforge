@@ -1,10 +1,10 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Upload, Music, X, Check } from 'lucide-react'
+import { Upload, Music, X, Check, Library } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 interface UploadedFile {
@@ -22,7 +22,10 @@ function fmtSize(bytes: number) {
 }
 
 export default function AudioUploader({ portfolioId, userId }: { portfolioId: string; userId: string }) {
-  const [files, setFiles] = useState<UploadedFile[]>([])
+  const [files,       setFiles]       = useState<UploadedFile[]>([])
+  const [showPicker,  setShowPicker]  = useState(false)
+  const [libraryFiles, setLibraryFiles] = useState<{id:string; file_name:string; file_url:string; file_size:number}[]>([])
+  const [loadingLib,  setLoadingLib]  = useState(false)
   const supabase = createClient()
   const router   = useRouter()
 
@@ -76,6 +79,33 @@ export default function AudioUploader({ portfolioId, userId }: { portfolioId: st
     router.refresh()
   }, [files.length, portfolioId, userId, supabase, router])
 
+  async function fetchLibrary() {
+    if (loadingLib) return
+    setLoadingLib(true)
+    const { data } = await supabase
+      .from('media_files')
+      .select('id, file_name, file_url, file_size')
+      .eq('owner_id', userId)
+      .eq('media_type', 'audio')
+      .order('created_at', { ascending: false })
+    setLibraryFiles(data || [])
+    setLoadingLib(false)
+  }
+
+  async function addFromLibrary(file: { file_name: string; file_url: string }) {
+    const { error } = await supabase.from('tracks').insert({
+      portfolio_id: portfolioId,
+      title: file.file_name.replace(/\.[^/.]+$/, ''),
+      genre: 'Score',
+      file_url: file.file_url,
+      sort_order: 99,
+    })
+    if (error) { toast.error('Errore: ' + error.message); return }
+    toast.success(`"${file.file_name}" aggiunto al portfolio!`)
+    setShowPicker(false)
+    router.refresh()
+  }
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { 'audio/*': ['.mp3', '.wav', '.flac', '.aiff', '.m4a', '.ogg'] },
@@ -84,6 +114,46 @@ export default function AudioUploader({ portfolioId, userId }: { portfolioId: st
 
   return (
     <div>
+      {/* Pulsante seleziona dalla libreria (Bug 30) */}
+      <button
+        type="button"
+        onClick={() => { setShowPicker(v => !v); if (!showPicker) fetchLibrary() }}
+        className="flex items-center gap-2 text-xs text-[#c8a45a] hover:text-[#e2c47e] mb-3 transition-colors"
+      >
+        <Library size={13} /> {showPicker ? 'Chiudi libreria' : 'Seleziona dalla Media Library'}
+      </button>
+
+      {showPicker && (
+        <div className="mb-4 border border-[#2a2830] rounded-xl overflow-hidden">
+          <div className="px-4 py-2.5 bg-[#0a0a12] border-b border-[#2a2830] text-[10px] font-mono text-[#5a5548] uppercase tracking-widest">
+            File audio nella tua libreria
+          </div>
+          {loadingLib ? (
+            <div className="px-4 py-6 text-center text-sm text-[#5a5548]">Caricamento…</div>
+          ) : libraryFiles.length === 0 ? (
+            <div className="px-4 py-6 text-center text-sm text-[#5a5548]">Nessun file audio in libreria. Carica prima dalla Media Library.</div>
+          ) : (
+            <div className="max-h-52 overflow-y-auto">
+              {libraryFiles.map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => addFromLibrary(f)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#17171f] transition-colors text-left border-b border-[#1a1a28] last:border-0"
+                >
+                  <Music size={13} className="text-[#c8a45a] flex-shrink-0" />
+                  <span className="flex-1 text-xs text-[#a09888] truncate">{f.file_name}</span>
+                  <span className="text-[10px] text-[#5a5548] font-mono flex-shrink-0">
+                    {f.file_size ? `${(f.file_size/1024/1024).toFixed(1)} MB` : ''}
+                  </span>
+                  <span className="text-[10px] text-[#c8a45a]">+ Aggiungi</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
