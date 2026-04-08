@@ -1,7 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Plus, Pencil, Eye, Trash2, FolderOpen } from 'lucide-react'
+import { Plus, Pencil, Eye, Trash2, FolderOpen, Share2 } from 'lucide-react'
 import DeletePortfolioButton from '@/components/admin/DeletePortfolioButton'
+
+// Bug 32: Pulsante copia link condivisione (client component)
+import CopyLinkButton from '@/components/admin/CopyLinkButton'
 
 export default async function PortfoliosPage() {
   const supabase = await createClient()
@@ -72,9 +75,14 @@ export default async function PortfoliosPage() {
                 <Link href={`/portfolios/${p.id}/edit`} className="btn btn-gold btn-sm flex-1 justify-center">
                   <Pencil size={12} /> Modifica
                 </Link>
-                <Link href={`/portfolios/${p.id}/preview`} className="btn btn-outline btn-sm">
+                <Link href={`/portfolios/${p.id}/preview`} className="btn btn-outline btn-sm" title="Anteprima">
                   <Eye size={12} />
                 </Link>
+                {p.status === 'published' && p.slug && (
+                  <CopyLinkButton
+                    url={`${process.env.NEXT_PUBLIC_APP_URL || 'https://www.scoreforge.it'}/${p.slug}`}
+                  />
+                )}
                 <DeletePortfolioButton id={p.id} title={p.title} />
               </div>
             </div>
