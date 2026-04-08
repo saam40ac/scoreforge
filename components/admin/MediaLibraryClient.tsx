@@ -48,11 +48,22 @@ export default function MediaLibraryClient({ files, userId }: { files: MediaFile
   })
 
   async function deleteFile(file: MediaFile) {
+    if (!confirm(`Eliminare "${file.file_name}"? Questa azione rimuoverà il file anche dai portfolio che lo usano.`)) return
+
     if (file.storage_path) {
       await supabase.storage.from('scoreforge-media').remove([file.storage_path])
     }
     await supabase.from('media_files').delete().eq('id', file.id)
-    toast.success('File eliminato.')
+
+    // Rimuovi il riferimento anche dalle tracce audio che usano questo file
+    if (file.media_type === 'audio') {
+      await supabase
+        .from('tracks')
+        .update({ file_url: null, waveform_data: null })
+        .eq('file_url', file.file_url)
+    }
+
+    toast.success('File eliminato e rimosso dai portfolio.')
     router.refresh()
   }
 
