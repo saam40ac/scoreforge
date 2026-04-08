@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -18,12 +18,14 @@ const THEMES = [
 ]
 
 interface Props {
-  portfolio: PortfolioWithContent | null
-  userId: string
-  profileBio: string
+  portfolio:      PortfolioWithContent | null
+  userId:         string
+  profileBio:     string       // compat
+  profileShortBio?: string     // Bug 22: bio breve
+  profileLongBio?:  string     // Bug 22: bio estesa
 }
 
-export default function PortfolioEditor({ portfolio, userId, profileBio }: Props) {
+export default function PortfolioEditor({ portfolio, userId, profileBio, profileShortBio, profileLongBio }: Props) {
   const router   = useRouter()
   const supabase = createClient()
   const isNew    = !portfolio
@@ -43,14 +45,28 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
   const [dlDisabled,  setDlDisabled]  = useState(portfolio?.downloads_disabled ?? true)
   const [saving,      setSaving]      = useState(false)
   const [activeTab,   setActiveTab]   = useState<'general'|'content'|'media'|'share'>('general')
+  const [isDirty,     setIsDirty]     = useState(false)
+  const [bannerUrl,   setBannerUrl]   = useState<string>((portfolio as any)?.banner_url ?? '')
 
   // Projects & tracks (gestiti localmente e salvati insieme al portfolio)
   const [projects, setProjects] = useState(portfolio?.projects ?? [])
   const [tracks,   setTracks]   = useState(portfolio?.tracks   ?? [])
 
+  // Bug 21: avviso modifiche non salvate
+  useEffect(() => {
+    if (!isDirty) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = 'Hai modifiche non salvate. Vuoi davvero uscire?'
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [isDirty])
+
   // Auto-slug da titolo
   function handleTitleChange(v: string) {
     setTitle(v)
+    setIsDirty(true)
     if (isNew) setSlug(v.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))
   }
 
@@ -75,6 +91,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
           title, slug, status: status as 'draft'|'published'|'private',
           theme: theme as 'dark'|'ivory'|'neon', accent_color: accentColor,
           target, description, bio, video_url: videoUrl, video_urls: videoUrls, noindex, downloads_disabled: dlDisabled,
+          banner_url: bannerUrl || null,
         }).eq('id', portfolioId!)
         if (error) throw error
       }
@@ -148,8 +165,8 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
               <Eye size={13} /> Anteprima
             </Link>
           )}
-          <button onClick={handleSave} disabled={saving} className="btn btn-gold btn-sm disabled:opacity-60">
-            <Save size={13} /> {saving ? 'Salvo…' : 'Salva'}
+          <button onClick={handleSave} disabled={saving} className="btn btn-gold btn-sm disabled:opacity-60" title={isDirty ? 'Hai modifiche non salvate' : ''}>
+            <Save size={13} /> {saving ? 'Salvo…' : isDirty ? 'Salva *' : 'Salva'}
           </button>
         </div>
       </div>
@@ -234,11 +251,20 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
               <div>
                 <label className="field-label">Biografia (per questo portfolio)</label>
                 <textarea className="field-input field-textarea" style={{ minHeight: 120 }} value={bio} onChange={e => setBio(e.target.value)} placeholder="Descrivi il tuo percorso artistico per questo target specifico…" />
-                {profileBio && (
-                  <button onClick={() => setBio(profileBio)} className="text-xs text-[#c8a45a] hover:underline mt-1">
-                    ↳ Usa la bio del profilo
-                  </button>
-                )}
+                <div className="flex gap-2 mt-1 flex-wrap">
+                  {(profileShortBio || profileBio) && (
+                    <button onClick={() => { setBio(profileShortBio || profileBio); setIsDirty(true) }}
+                      className="text-xs text-[#c8a45a] hover:underline">
+                      ↳ Usa bio breve
+                    </button>
+                  )}
+                  {profileLongBio && (
+                    <button onClick={() => { setBio(profileLongBio); setIsDirty(true) }}
+                      className="text-xs text-[#c8a45a] hover:underline">
+                      ↳ Usa bio estesa
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="border-t border-[#2a2830] pt-5">
@@ -321,27 +347,57 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
           {/* TAB: MEDIA */}
           {activeTab === 'media' && (
             <div className="space-y-6 animate-fadein">
-              <VideoManager
-                portfolioId={portfolio?.id ?? 'new'}
-                userId={userId}
-                videoUrl={videoUrl}
-                setVideoUrl={setVideoUrl}
-                videoUrls={videoUrls}
-                setVideoUrls={setVideoUrls}
-              />
-              {portfolio && (
-                <>
-                  <div className="border-t border-[#2a2830] pt-5">
-                    <label className="field-label mb-3">Upload Tracce Audio</label>
-                    <AudioUploader portfolioId={portfolio.id} userId={userId} />
-                  </div>
-                </>
-              )}
-              {!portfolio && (
+              {/* Audio prima, poi Video (Bug 28) */}
+              {portfolio ? (
+                <div>
+                  <label className="field-label mb-3">Upload Tracce Audio</label>
+                  <AudioUploader portfolioId={portfolio.id} userId={userId} />
+                </div>
+              ) : (
                 <div className="bg-[#17171f] border border-[#2a2830] rounded-xl p-5 text-center text-sm text-[#5a5548]">
                   Salva prima il portfolio per abilitare l'upload dei file audio.
                 </div>
               )}
+              <div className="border-t border-[#2a2830] pt-5">
+                <VideoManager
+                  portfolioId={portfolio?.id ?? 'new'}
+                  userId={userId}
+                  videoUrl={videoUrl}
+                  setVideoUrl={setVideoUrl}
+                  videoUrls={videoUrls}
+                  setVideoUrls={setVideoUrls}
+                />
+              </div>
+              {/* Banner immagine (Bug 25) */}
+              <div className="border-t border-[#2a2830] pt-5">
+                <label className="field-label mb-2">Banner / Immagine di copertina</label>
+                <p className="text-xs text-[#5a5548] mb-3">Verrà mostrata come intestazione visiva nella tua landing page.</p>
+                {bannerUrl && (
+                  <div className="relative mb-3 rounded-xl overflow-hidden" style={{ maxHeight: 160 }}>
+                    <img src={bannerUrl} alt="Banner" className="w-full object-cover" style={{ maxHeight: 160 }} />
+                    <button onClick={() => { setBannerUrl(''); setIsDirty(true) }}
+                      className="absolute top-2 right-2 btn btn-ghost btn-sm btn-icon bg-black/50 text-white hover:bg-red-500/70">
+                      ✕
+                    </button>
+                  </div>
+                )}
+                <label className="btn btn-outline btn-sm cursor-pointer">
+                  📷 {bannerUrl ? 'Cambia banner' : 'Carica banner'}
+                  <input type="file" accept="image/*" className="hidden"
+                    onChange={async e => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const path = `${userId}/banners/${portfolio?.id ?? 'new'}-banner.${file.name.split('.').pop()}`
+                      const { data, error } = await supabase.storage.from('scoreforge-media').upload(path, file, { upsert: true })
+                      if (error) { toast.error('Errore upload banner'); return }
+                      const { data: urlData } = supabase.storage.from('scoreforge-media').getPublicUrl(data.path)
+                      setBannerUrl(urlData.publicUrl + '?t=' + Date.now())
+                      setIsDirty(true)
+                      toast.success('Banner caricato!')
+                    }}
+                  />
+                </label>
+              </div>
             </div>
           )}
 
@@ -359,7 +415,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio }: Props
               </div>
               <div className="card card-sm space-y-0">
                 {[
-                  { label: 'Download audio disabilitato', desc: 'Solo streaming, nessun download', val: dlDisabled, set: setDlDisabled },
+                  { label: 'Consenti download audio', desc: 'Gli ascoltatori possono scaricare le tracce audio', val: !dlDisabled, set: (v: boolean) => setDlDisabled(!v) },
                   { label: 'Nascosto da Google (noindex)', desc: 'Aggiunge meta noindex alla landing page', val: noindex, set: setNoindex },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between py-3 border-b border-[#2a2830] last:border-0">
