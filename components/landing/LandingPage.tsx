@@ -93,7 +93,8 @@ function ContactModal({ open, onClose, accentColor, T, email }: {
 // ── Componente principale ─────────────────────────────────────
 function LandingPageInner({ portfolio, profile, preview }: Props) {
   const T  = THEMES[portfolio.theme as keyof typeof THEMES] || THEMES.dark
-  const ac = portfolio.accent_color || '#c8a45a'
+  const ac        = portfolio.accent_color || '#c8a45a'
+  const bannerUrl = (portfolio as any).banner_url as string | null
   const [contactOpen,  setContactOpen]  = useState(false)
   const [shareLinkId,  setShareLinkId]  = useState<string | undefined>(undefined)
   const searchParams = useSearchParams()
@@ -193,6 +194,14 @@ function LandingPageInner({ portfolio, profile, preview }: Props) {
             </div>
           </div>
         </div>
+
+        {/* ── BANNER (Bug 25) ── */}
+        {bannerUrl && (
+          <div style={{ width:'100%', maxHeight:'260px', overflow:'hidden', position:'relative' }}>
+            <img src={bannerUrl} alt="" style={{ width:'100%', maxHeight:'260px', objectFit:'cover', display:'block' }} />
+            <div style={{ position:'absolute', inset:0, background:`linear-gradient(to bottom, transparent 40%, ${T.bg} 100%)` }} />
+          </div>
+        )}
 
         {/* ── HERO ── */}
         <div style={{ background:T.bg, padding:'56px 0 48px', position:'relative', overflow:'hidden' }}>
