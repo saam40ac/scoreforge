@@ -7,11 +7,11 @@ import { LogoIcon } from '@/components/brand/Logo'
 import { ThemeProvider, useTheme } from './ThemeProvider'
 
 function ThemeToggle() {
-  const { theme, toggle, isAutomatic } = useTheme()
+  const { theme, toggle } = useTheme()
   return (
     <button
       onClick={toggle}
-      title={isAutomatic ? 'Tema automatico (segue il sistema) — clicca per scegliere' : theme === 'dark' ? 'Passa al tema chiaro' : 'Passa al tema scuro'}
+      title={theme === 'dark' ? 'Passa al tema chiaro' : 'Passa al tema scuro'}
       style={{
         background: 'var(--sf-bg3)',
         border: '1px solid var(--sf-border)',
@@ -29,7 +29,7 @@ function ThemeToggle() {
     >
       <span style={{ fontSize: '14px' }}>{theme === 'dark' ? '☀' : '☾'}</span>
       <span style={{ display: 'none' }} className="sm:inline">
-        {isAutomatic ? 'Auto' : theme === 'dark' ? 'Chiaro' : 'Scuro'}
+        {theme === 'dark' ? 'Chiaro' : 'Scuro'}
       </span>
     </button>
   )
@@ -97,16 +97,17 @@ function Shell({ children, userName, userEmail }: {
             <Menu size={20} />
           </button>
 
-          {/* Logo mobile */}
-          <div className="lg:hidden">
-            <LogoIcon c={{
-              arc1: 'var(--sf-gold2, #e2c47e)',
-              arc2: 'var(--sf-gold, #c8a45a)',
-              text: 'var(--sf-text)',
-              forge: 'var(--sf-gold)',
-              line: 'var(--sf-border)',
-              dash: 'var(--sf-gold)',
-            }} size={28} />
+          {/* Logo mobile — Issue 1: proporzioni corrette */}
+          <div className="lg:hidden" style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M14,2 Q19,2 19,7 Q19,12 14,12" stroke="var(--sf-gold2, #e2c47e)" strokeWidth="2.2" strokeLinecap="round"/>
+              <path d="M8,11 Q3,11 3,16 Q3,21 8,21" stroke="var(--sf-gold, #c8a45a)" strokeWidth="2.2" strokeLinecap="round"/>
+              <line x1="8" y1="11" x2="14" y2="11" stroke="var(--sf-gold2, #e2c47e)" strokeWidth="2.2" strokeLinecap="round"/>
+            </svg>
+            <div style={{ display:'flex', flexDirection:'column', lineHeight:1, gap:'2px' }}>
+              <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'13px', fontWeight:300, color:'var(--sf-text, #f0ebe0)', letterSpacing:'1.5px' }}>SCORE</span>
+              <span style={{ fontFamily:"'Outfit',sans-serif", fontSize:'6px', fontWeight:600, color:'var(--sf-gold, #c8a45a)', letterSpacing:'3px' }}>FORGE</span>
+            </div>
           </div>
 
           {/* Spacer */}
