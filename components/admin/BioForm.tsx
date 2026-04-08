@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Save, X, Plus, Camera, ExternalLink } from 'lucide-react'
+import { Save, X, Plus, Camera, ExternalLink, Pencil, Check } from 'lucide-react'
 import type { Profile } from '@/lib/supabase/types'
 
 interface CustomLink { label: string; url: string }
@@ -55,6 +55,9 @@ export default function BioForm({ profile, userId }: { profile: Profile | null; 
   )
   const [newLinkLabel, setNewLinkLabel] = useState('')
   const [newLinkUrl,   setNewLinkUrl]   = useState('')
+  const [editingLink,  setEditingLink]  = useState<number | null>(null)
+  const [editLabel,    setEditLabel]    = useState('')
+  const [editUrl,      setEditUrl]      = useState('')
 
   const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'A'
 
@@ -109,6 +112,18 @@ export default function BioForm({ profile, userId }: { profile: Profile | null; 
   }
   function removeCustomLink(i: number) {
     setCustomLinks(prev => prev.filter((_, idx) => idx !== i))
+  }
+  function startEditLink(i: number) {
+    setEditingLink(i)
+    setEditLabel(customLinks[i].label)
+    setEditUrl(customLinks[i].url)
+  }
+  function saveEditLink(i: number) {
+    if (!editLabel.trim() || !editUrl.trim()) return
+    let url = editUrl.trim()
+    if (!url.startsWith('http')) url = 'https://' + url
+    setCustomLinks(prev => prev.map((l, idx) => idx === i ? { label: editLabel.trim(), url } : l))
+    setEditingLink(null)
   }
 
   return (
@@ -209,22 +224,52 @@ export default function BioForm({ profile, userId }: { profile: Profile | null; 
           CV su Drive, showreel su Dropbox, cartella stampa, qualsiasi URL — appariranno accanto ai social.
         </p>
 
-        {/* Lista link aggiunti */}
+        {/* Lista link aggiunti — con modifica inline (Bug 27) */}
         {customLinks.length > 0 && (
           <div className="space-y-2 mb-4">
             {customLinks.map((l, i) => (
-              <div key={i} className="flex items-center gap-2 rounded-lg px-3 py-2"
+              <div key={i} className="rounded-lg px-3 py-2"
                 style={{ background:'var(--sf-bg3)', border:'1px solid var(--sf-border)' }}>
-                <ExternalLink size={13} style={{ color:'var(--sf-text3)', flexShrink:0 }} />
-                <span className="text-sm font-medium flex-shrink-0" style={{ color:'var(--sf-text)', minWidth:'120px' }}>{l.label}</span>
-                <span className="text-xs font-mono truncate flex-1" style={{ color:'var(--sf-gold)' }}>{l.url}</span>
-                <button onClick={() => removeCustomLink(i)}
-                  className="flex-shrink-0 transition-colors"
-                  style={{ background:'none', border:'none', cursor:'pointer', color:'var(--sf-text3)' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = '#c94b4b')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--sf-text3)')}>
-                  <X size={14} />
-                </button>
+                {editingLink === i ? (
+                  <div className="flex gap-2 flex-wrap">
+                    <input className="field-input flex-1 min-w-[100px]" value={editLabel}
+                      onChange={e => setEditLabel(e.target.value)} placeholder="Etichetta"
+                      onKeyDown={e => e.key === 'Enter' && saveEditLink(i)} />
+                    <input className="field-input flex-1 min-w-[160px]" value={editUrl}
+                      onChange={e => setEditUrl(e.target.value)} placeholder="URL"
+                      onKeyDown={e => e.key === 'Enter' && saveEditLink(i)} />
+                    <button onClick={() => saveEditLink(i)}
+                      className="btn btn-gold btn-sm btn-icon" title="Salva">
+                      <Check size={13} />
+                    </button>
+                    <button onClick={() => setEditingLink(null)}
+                      className="btn btn-ghost btn-sm btn-icon" title="Annulla">
+                      <X size={13} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <ExternalLink size={13} style={{ color:'var(--sf-text3)', flexShrink:0 }} />
+                    <span className="text-sm font-medium flex-shrink-0" style={{ color:'var(--sf-text)', minWidth:'100px' }}>{l.label}</span>
+                    <span className="text-xs font-mono truncate flex-1" style={{ color:'var(--sf-gold)' }}>{l.url}</span>
+                    <button onClick={() => startEditLink(i)}
+                      className="flex-shrink-0 transition-colors"
+                      style={{ background:'none', border:'none', cursor:'pointer', color:'var(--sf-text3)' }}
+                      title="Modifica"
+                      onMouseEnter={e => (e.currentTarget.style.color = 'var(--sf-gold)')}
+                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--sf-text3)')}>
+                      <Pencil size={13} />
+                    </button>
+                    <button onClick={() => removeCustomLink(i)}
+                      className="flex-shrink-0 transition-colors"
+                      style={{ background:'none', border:'none', cursor:'pointer', color:'var(--sf-text3)' }}
+                      title="Elimina"
+                      onMouseEnter={e => (e.currentTarget.style.color = '#c94b4b')}
+                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--sf-text3)')}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
