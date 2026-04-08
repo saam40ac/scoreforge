@@ -242,7 +242,7 @@ function LandingPageInner({ portfolio, profile, preview }: Props) {
           if (sectionKey === 'bio' && portfolio.bio) return (
             <div key="bio" style={{ ...sec }}>
               <div style={wrap}>
-                <div style={tag}>{secTitle('bio_tag', 'Chi sono')}</div>
+                <div style={tag}>{secTitle('bio', 'Chi sono')}</div>
                 <div style={{ display:'flex', gap:'32px', alignItems:'flex-start', flexWrap:'wrap' }}>
                   {profile.avatar_url && (
                     <div style={{ flexShrink:0 }}>
