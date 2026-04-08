@@ -108,9 +108,9 @@ export default function VideoManager({
       return
     }
     for (const file of accepted) {
-      // Supabase Storage Free: limite 50 MB per file
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error(`"${file.name}" supera 50 MB. Caricalo su YouTube e usa il link embed.`)
+      // Limite upload diretto: 200 MB per file
+      if (file.size > 200 * 1024 * 1024) {
+        toast.error(`"${file.name}" supera 200 MB. Per video più grandi usa YouTube o Vimeo.`)
         continue
       }
       setUploading(true)
@@ -174,7 +174,7 @@ export default function VideoManager({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { 'video/*': ['.mp4', '.mov', '.webm'] },
-    maxSize: 50 * 1024 * 1024,
+    maxSize: 200 * 1024 * 1024,
     multiple: true,
   })
 
@@ -310,7 +310,7 @@ export default function VideoManager({
               <p className="text-sm text-[#a09888]">
                 <span className="text-[#c8a45a] font-medium">Clicca</span> o trascina un file video
               </p>
-              <p className="text-xs text-[#5a5548] mt-1">MP4, MOV, WebM · max <strong className="text-[#a09888]">50 MB</strong></p>
+              <p className="text-xs text-[#5a5548] mt-1">MP4, MOV, WebM · max <strong className="text-[#a09888]">200 MB</strong></p>
               <p className="text-xs text-[#5a5548] mt-0.5">
                 Per video più grandi usa <strong className="text-[#a09888]">YouTube o Vimeo</strong> (gratuito e senza limiti)
               </p>
