@@ -17,6 +17,7 @@ function fmtSize(b: number) {
 function FileIcon({ type }: { type: string }) {
   if (type === 'audio') return <Music size={14} className="text-[#c8a45a]" />
   if (type === 'image') return <Image size={14} className="text-blue-400" />
+  if (type === 'video') return <span style={{ fontSize: 14, lineHeight: 1 }}>🎬</span>
   return <FileText size={14} className="text-[#5a5548]" />
 }
 
@@ -26,12 +27,12 @@ export default function MediaLibraryClient({ files, userId }: { files: MediaFile
   const [uploading, setUploading] = useState(false)
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: { 'audio/*': ['.mp3', '.wav', '.flac', '.aiff'], 'image/*': ['.jpg', '.jpeg', '.png', '.webp'] },
+    accept: { 'audio/*': ['.mp3', '.wav', '.flac', '.aiff', '.m4a'], 'image/*': ['.jpg', '.jpeg', '.png', '.webp'], 'video/*': ['.mp4', '.mov', '.webm'] },
     maxSize: 100 * 1024 * 1024,
     onDrop: async (accepted) => {
       setUploading(true)
       for (const file of accepted) {
-        const type  = file.type.startsWith('audio') ? 'audio' : 'image'
+        const type  = file.type.startsWith('audio') ? 'audio' : file.type.startsWith('video') ? 'video' : 'image'
         const path  = `${userId}/library/${Date.now()}-${file.name}`
         const { data, error } = await supabase.storage.from('scoreforge-media').upload(path, file)
         if (error) { toast.error(`Errore: ${file.name}`); continue }
@@ -48,22 +49,11 @@ export default function MediaLibraryClient({ files, userId }: { files: MediaFile
   })
 
   async function deleteFile(file: MediaFile) {
-    if (!confirm(`Eliminare "${file.file_name}"? Questa azione rimuoverà il file anche dai portfolio che lo usano.`)) return
-
     if (file.storage_path) {
       await supabase.storage.from('scoreforge-media').remove([file.storage_path])
     }
     await supabase.from('media_files').delete().eq('id', file.id)
-
-    // Rimuovi il riferimento anche dalle tracce audio che usano questo file
-    if (file.media_type === 'audio') {
-      await supabase
-        .from('tracks')
-        .update({ file_url: null, waveform_data: null })
-        .eq('file_url', file.file_url)
-    }
-
-    toast.success('File eliminato e rimosso dai portfolio.')
+    toast.success('File eliminato.')
     router.refresh()
   }
 
@@ -87,7 +77,7 @@ export default function MediaLibraryClient({ files, userId }: { files: MediaFile
           <p className="text-sm text-[#a09888]">
             {uploading ? 'Upload in corso…' : <><span className="text-[#c8a45a] font-medium">Clicca</span> o trascina file audio e immagini</>}
           </p>
-          <p className="text-xs text-[#5a5548] mt-1">MP3, WAV, FLAC, JPG, PNG, WebP · max 100 MB</p>
+          <p className="text-xs text-[#5a5548] mt-1">MP3, WAV, FLAC · JPG, PNG, WebP · MP4, MOV · max 100 MB</p>
         </div>
 
         {/* Storage bar */}
