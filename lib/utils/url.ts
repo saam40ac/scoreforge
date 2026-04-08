@@ -1,16 +1,15 @@
-/**
- * Restituisce l'URL base dell'app senza slash finale.
- * Gestisce il caso in cui NEXT_PUBLIC_APP_URL abbia uno slash finale.
- */
-export function appUrl(): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  return base.replace(/\/+$/, '') // rimuove tutti gli slash finali
+export function portfolioUrl(slug: string): string {
+  const base = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (typeof window !== 'undefined' ? window.location.origin : 'https://www.scoreforge.it')
+  ).replace(/\/+$/, '')
+  return `${base}/${slug}`
 }
 
-/**
- * Costruisce l'URL pubblico di un portfolio.
- * Es: https://scoreforge-zeta.vercel.app/orchestral
- */
-export function portfolioUrl(slug: string): string {
-  return `${appUrl()}/${slug}`
+export function absoluteUrl(path: string): string {
+  const base = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (typeof window !== 'undefined' ? window.location.origin : 'https://www.scoreforge.it')
+  ).replace(/\/+$/, '')
+  return `${base}${path.startsWith('/') ? path : '/' + path}`
 }
