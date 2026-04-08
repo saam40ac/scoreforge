@@ -93,8 +93,15 @@ function ContactModal({ open, onClose, accentColor, T, email }: {
 // ── Componente principale ─────────────────────────────────────
 function LandingPageInner({ portfolio, profile, preview }: Props) {
   const T  = THEMES[portfolio.theme as keyof typeof THEMES] || THEMES.dark
-  const ac        = portfolio.accent_color || '#c8a45a'
-  const bannerUrl = (portfolio as any).banner_url as string | null
+  const ac           = portfolio.accent_color || '#c8a45a'
+  const bannerUrl    = (portfolio as any).banner_url as string | null
+  const sectionOrder = ((portfolio as any).section_order as string[]) || ['bio','projects','tracks','videos']
+  const sectionTitles= ((portfolio as any).section_titles as Record<string,string>) || {}
+
+  // Titoli con fallback ai default
+  function secTitle(key: string, defaultTitle: string) {
+    return sectionTitles[key] || defaultTitle
+  }
   const [contactOpen,  setContactOpen]  = useState(false)
   const [shareLinkId,  setShareLinkId]  = useState<string | undefined>(undefined)
   const searchParams = useSearchParams()
@@ -230,163 +237,105 @@ function LandingPageInner({ portfolio, profile, preview }: Props) {
           </div>
         </div>
 
-        {/* ── BIO con foto artista ── */}
-        {portfolio.bio && (
-          <div style={{ ...sec }}>
-            <div style={wrap}>
-              <div style={tag}>Chi sono</div>
-              {/* Layout: foto a sinistra + testo a destra su desktop, impilato su mobile */}
-              <div style={{ display:'flex', gap:'32px', alignItems:'flex-start', flexWrap:'wrap' }}>
-                {/* Foto artista */}
-                {profile.avatar_url && (
-                  <div style={{ flexShrink:0 }}>
-                    <img
-                      src={profile.avatar_url}
-                      alt={name}
-                      style={{
-                        width: 'clamp(120px, 20vw, 200px)',
-                        height: 'clamp(140px, 24vw, 240px)',
-                        objectFit: 'cover',
-                        borderRadius: '12px',
-                        border: `1px solid ${T.border}`,
-                        display: 'block',
-                      }}
-                    />
-                  </div>
-                )}
-                {/* Testo bio */}
-                <div style={{ flex:1, minWidth:'200px' }}>
-                  <h2 style={h2s}>{name}</h2>
-                  <p style={body}>{portfolio.bio}</p>
-                  {skills.length > 0 && (
-                    <div style={{ marginTop:'18px', display:'flex', flexWrap:'wrap', gap:'7px' }}>
-                      {skills.map((s: string, i: number) => (
-                        <span key={i} style={{
-                          fontSize:'11px', fontFamily:'DM Mono,monospace',
-                          padding:'4px 12px', borderRadius:'20px',
-                          background:`${ac}12`, border:`1px solid ${ac}35`,
-                          color:ac, letterSpacing:'.04em',
-                        }}>{s}</span>
-                      ))}
+        {/* ── SEZIONI ORDINATE DINAMICAMENTE ── */}
+        {sectionOrder.map(sectionKey => {
+          if (sectionKey === 'bio' && portfolio.bio) return (
+            <div key="bio" style={{ ...sec }}>
+              <div style={wrap}>
+                <div style={tag}>{secTitle('bio_tag', 'Chi sono')}</div>
+                <div style={{ display:'flex', gap:'32px', alignItems:'flex-start', flexWrap:'wrap' }}>
+                  {profile.avatar_url && (
+                    <div style={{ flexShrink:0 }}>
+                      <img src={profile.avatar_url} alt={name} style={{ width:'clamp(120px,20vw,200px)', height:'clamp(140px,24vw,240px)', objectFit:'cover', borderRadius:'12px', border:`1px solid ${T.border}`, display:'block' }} />
                     </div>
                   )}
+                  <div style={{ flex:1, minWidth:'200px' }}>
+                    <h2 style={h2s}>{name}</h2>
+                    <p style={body}>{portfolio.bio}</p>
+                    {skills.length > 0 && (
+                      <div style={{ marginTop:'18px', display:'flex', flexWrap:'wrap', gap:'7px' }}>
+                        {skills.map((s: string, i: number) => (
+                          <span key={i} style={{ fontSize:'11px', fontFamily:'DM Mono,monospace', padding:'4px 12px', borderRadius:'20px', background:`${ac}12`, border:`1px solid ${ac}35`, color:ac, letterSpacing:'.04em' }}>{s}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* ── PROGETTI con copertine ── */}
-        {portfolio.projects.length > 0 && (
-          <div style={{ ...sec }}>
-            <div style={wrap}>
-              <div style={tag}>Lavori selezionati</div>
-              <h2 style={h2s}>Progetti</h2>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:'16px', marginTop:'16px' }}>
-                {portfolio.projects.map(p => (
-                  <div key={p.id} style={{ borderRadius:'12px', overflow:'hidden', border:`1px solid ${T.border}`, background:T.bg2, transition:'transform .2s' }}
-                    onMouseEnter={e=>(e.currentTarget.style.transform='translateY(-3px)')}
-                    onMouseLeave={e=>(e.currentTarget.style.transform='translateY(0)')}>
-                    {/* Copertina: immagine reale se presente, altrimenti sfondo colorato con emoji */}
-                    {p.cover_url ? (
-                      <img
-                        src={p.cover_url}
-                        alt={p.title}
-                        style={{ width:'100%', height:'120px', objectFit:'cover', display:'block' }}
-                      />
-                    ) : (
-                      <div style={{ height:'120px', display:'flex', alignItems:'center', justifyContent:'center', background:`linear-gradient(135deg,${T.bg3},${ac}18)`, position:'relative' }}>
-                        <span style={{ fontSize:'36px', opacity:.6 }}>{p.emoji}</span>
-                        <div style={{ position:'absolute', inset:0, background:`linear-gradient(to bottom,transparent 50%,${T.bg2}dd)` }} />
-                      </div>
-                    )}
-                    <div style={{ padding:'10px 13px 13px' }}>
-                      <div style={{ fontSize:'13.5px', fontWeight:500, marginBottom:'4px', color:T.text }}>{p.title}</div>
-                      <div style={{ fontSize:'10.5px', fontFamily:'DM Mono,monospace', color:ac }}>{p.project_type}</div>
-                      {p.description && (
-                        <div style={{ fontSize:'12px', color:T.text3, marginTop:'6px', lineHeight:1.5 }}>{p.description}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── AUDIO ── */}
-        {portfolio.tracks.length > 0 && (
-          <div id="sf-audio" style={{ ...sec }}>
-            <div style={wrap}>
-              <div style={tag}>Composizioni</div>
-              <h2 style={h2s}>Ascolta il mio lavoro</h2>
-              <div style={{ display:'flex', flexDirection:'column', gap:'8px', marginTop:'14px' }}>
-                {portfolio.tracks.map(t => (
-                  <AudioPlayer key={t.id} track={t} accentColor={ac} theme={portfolio.theme as 'dark'|'ivory'|'neon'} portfolioId={portfolio.id} shareLinkId={shareLinkId} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── VIDEO (multipli, griglia 2 col su desktop) ── */}
-        {allVideos.length > 0 && (
-          <div style={{ ...sec }}>
-            <div style={wrap}>
-              <div style={tag}>Video</div>
-              <h2 style={h2s}>Showreel</h2>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: allVideos.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
-                gap: '16px',
-                marginTop: '14px',
-              }}>
-                {allVideos.map((vUrl, vi) => {
-                  const isEmbed = vUrl.includes('youtube') || vUrl.includes('vimeo')
-                  return (
-                    <div key={vi}>
-                      {/* Etichetta video se più di uno */}
-                      {allVideos.length > 1 && (
-                        <div style={{ fontSize:'10px', fontFamily:'DM Mono,monospace', color:T.text3, marginBottom:'6px', letterSpacing:'.08em' }}>
-                          {vi === 0 ? 'Video principale' : `Video ${vi + 1}`}
+          )
+          if (sectionKey === 'projects' && portfolio.projects.length > 0) return (
+            <div key="projects" style={{ ...sec }}>
+              <div style={wrap}>
+                <div style={tag}>{secTitle('projects_tag', 'Lavori selezionati')}</div>
+                <h2 style={h2s}>{secTitle('projects', 'Progetti')}</h2>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:'16px', marginTop:'16px' }}>
+                  {portfolio.projects.map(p => (
+                    <div key={p.id} style={{ borderRadius:'12px', overflow:'hidden', border:`1px solid ${T.border}`, background:T.bg2, transition:'transform .2s' }}
+                      onMouseEnter={e=>(e.currentTarget.style.transform='translateY(-3px)')} onMouseLeave={e=>(e.currentTarget.style.transform='translateY(0)')}>
+                      {p.cover_url ? (
+                        <img src={p.cover_url} alt={p.title} style={{ width:'100%', height:'120px', objectFit:'cover', display:'block' }} />
+                      ) : (
+                        <div style={{ height:'120px', display:'flex', alignItems:'center', justifyContent:'center', background:`linear-gradient(135deg,${T.bg3},${ac}18)`, position:'relative' }}>
+                          <span style={{ fontSize:'36px', opacity:.6 }}>{p.emoji}</span>
+                          <div style={{ position:'absolute', inset:0, background:`linear-gradient(to bottom,transparent 50%,${T.bg2}dd)` }} />
                         </div>
                       )}
-                      <div style={{ position:'relative', paddingBottom:'56.25%', height:0, overflow:'hidden', borderRadius:'12px', background:T.bg3 }}>
+                      <div style={{ padding:'10px 13px 13px' }}>
+                        <div style={{ fontSize:'13.5px', fontWeight:500, marginBottom:'4px', color:T.text }}>{p.title}</div>
+                        <div style={{ fontSize:'10.5px', fontFamily:'DM Mono,monospace', color:ac }}>{p.project_type}</div>
+                        {p.description && <div style={{ fontSize:'12px', color:T.text3, marginTop:'6px', lineHeight:1.5 }}>{p.description}</div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )
+          if (sectionKey === 'tracks' && portfolio.tracks.length > 0) return (
+            <div key="tracks" id="sf-audio" style={{ ...sec }}>
+              <div style={wrap}>
+                <div style={tag}>{secTitle('tracks_tag', 'Composizioni')}</div>
+                <h2 style={h2s}>{secTitle('tracks', 'Ascolta il mio lavoro')}</h2>
+                <div style={{ display:'flex', flexDirection:'column', gap:'8px', marginTop:'14px' }}>
+                  {portfolio.tracks.map(t => (
+                    <AudioPlayer key={t.id} track={t} accentColor={ac} theme={portfolio.theme as 'dark'|'ivory'|'neon'} portfolioId={portfolio.id} shareLinkId={shareLinkId} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )
+          if (sectionKey === 'videos' && allVideos.length > 0) return (
+            <div key="videos" style={{ ...sec }}>
+              <div style={wrap}>
+                <div style={tag}>{secTitle('videos_tag', 'Video')}</div>
+                <h2 style={h2s}>{secTitle('videos', 'Showreel')}</h2>
+                <div style={{ display:'grid', gridTemplateColumns: allVideos.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap:'16px', marginTop:'14px' }}>
+                  {allVideos.map((vUrl, vi) => {
+                    const isEmbed = vUrl.includes('youtube') || vUrl.includes('vimeo')
+                    return (
+                      <div key={vi} style={{ borderRadius:'12px', overflow:'hidden', border:`1px solid ${T.border}`, background:T.bg2, position:'relative' }}>
+                        {allVideos.length > 1 && <div style={{ position:'absolute', top:'8px', left:'10px', fontSize:'10px', fontFamily:'DM Mono,monospace', color: T.text3, background: T.bg3+'cc', padding:'2px 8px', borderRadius:'4px', zIndex:1 }}>Video {vi+1}</div>}
                         {isEmbed ? (
-                          preview ? (
-                            <div
-                              style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'10px', cursor:'pointer' }}
-                              onClick={()=>window.open(vUrl.replace('/embed/','/watch?v='),'_blank')}
-                            >
-                              <div style={{ width:'56px', height:'56px', borderRadius:'50%', border:`2px solid ${ac}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px', color:ac }}>▶</div>
-                              <div style={{ fontSize:'12px', color:T.text2 }}>Clicca per riprodurre</div>
-                            </div>
-                          ) : (
-                            <iframe
-                              src={vUrl}
-                              allow="autoplay;encrypted-media"
-                              allowFullScreen
-                              style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:0, borderRadius:'12px' }}
-                            />
-                          )
+                          <div style={{ position:'relative', paddingBottom:'56.25%', height:0 }}>
+                            <iframe src={vUrl} style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:'none' }} allow="autoplay; fullscreen" allowFullScreen title={`Video ${vi+1}`} />
+                          </div>
                         ) : (
-                          <video
-                            controls
-                            style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', borderRadius:'12px', background:'#000' }}
-                          >
+                          <video controls style={{ width:'100%', display:'block' }} preload="metadata">
                             <source src={vUrl} />
                           </video>
                         )}
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )
+          return null
+        })}
 
-        {/* ── CONTATTI ── */}
+                {/* ── CONTATTI ── */}
         {email && (
           <div id="sf-contact" style={{ background:T.bg, padding:'56px 0' }}>
             <div style={{ ...wrap, textAlign:'center' }}>
