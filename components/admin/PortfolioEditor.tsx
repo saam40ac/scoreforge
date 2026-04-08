@@ -123,9 +123,8 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
         }
       }
 
-      toast.success('Portfolio salvato!')
-      router.push('/portfolios')
-      router.refresh()
+      toast.success('Portfolio salvato! ✓')
+      setIsDirty(false)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Errore durante il salvataggio.'
       toast.error(msg)
@@ -183,7 +182,12 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
             {(['general','content','media','share','structure'] as const).map(tab => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  if (isDirty && activeTab !== tab) {
+                    if (!window.confirm('Hai modifiche non salvate in questa sezione. Continuare senza salvare?')) return
+                  }
+                  setActiveTab(tab)
+                }}
                 className={`px-4 py-2.5 text-[13.5px] whitespace-nowrap border-b-2 transition-all ${
                   activeTab === tab
                     ? 'border-[#c8a45a] text-[#e2c47e]'
