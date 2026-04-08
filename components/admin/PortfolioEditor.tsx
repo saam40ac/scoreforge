@@ -355,31 +355,11 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
           {/* TAB: MEDIA */}
           {activeTab === 'media' && (
             <div className="space-y-6 animate-fadein">
-              {/* Audio prima, poi Video (Bug 28) */}
-              {portfolio ? (
-                <div>
-                  <label className="field-label mb-3">Upload Tracce Audio</label>
-                  <AudioUploader portfolioId={portfolio.id} userId={userId} />
-                </div>
-              ) : (
-                <div className="bg-[#17171f] border border-[#2a2830] rounded-xl p-5 text-center text-sm text-[#5a5548]">
-                  Salva prima il portfolio per abilitare l'upload dei file audio.
-                </div>
-              )}
-              <div className="border-t border-[#2a2830] pt-5">
-                <VideoManager
-                  portfolioId={portfolio?.id ?? 'new'}
-                  userId={userId}
-                  videoUrl={videoUrl}
-                  setVideoUrl={setVideoUrl}
-                  videoUrls={videoUrls}
-                  setVideoUrls={setVideoUrls}
-                />
-              </div>
-              {/* Banner immagine (Bug 25) */}
-              <div className="border-t border-[#2a2830] pt-5">
-                <label className="field-label mb-2">Banner / Immagine di copertina</label>
-                <p className="text-xs text-[#5a5548] mb-3">Verrà mostrata come intestazione visiva nella tua landing page.</p>
+
+              {/* 1. BANNER — primo in assoluto */}
+              <div>
+                <label className="field-label mb-1">1. Banner / Immagine di copertina</label>
+                <p className="text-xs text-[#5a5548] mb-3">Appare sopra tutto nella tua landing page, come intestazione visiva.</p>
                 {bannerUrl && (
                   <div className="relative mb-3 rounded-xl overflow-hidden" style={{ maxHeight: 160 }}>
                     <img src={bannerUrl} alt="Banner" className="w-full object-cover" style={{ maxHeight: 160 }} />
@@ -406,6 +386,32 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                   />
                 </label>
               </div>
+
+              {/* 2. AUDIO */}
+              <div className="border-t border-[#2a2830] pt-5">
+                <label className="field-label mb-1">2. Tracce Audio</label>
+                {portfolio ? (
+                  <AudioUploader portfolioId={portfolio.id} userId={userId} />
+                ) : (
+                  <div className="bg-[#17171f] border border-[#2a2830] rounded-xl p-5 text-center text-sm text-[#5a5548]">
+                    Salva prima il portfolio per abilitare l'upload dei file audio.
+                  </div>
+                )}
+              </div>
+
+              {/* 3. VIDEO */}
+              <div className="border-t border-[#2a2830] pt-5">
+                <label className="field-label mb-1">3. Video</label>
+                <VideoManager
+                  portfolioId={portfolio?.id ?? 'new'}
+                  userId={userId}
+                  videoUrl={videoUrl}
+                  setVideoUrl={setVideoUrl}
+                  videoUrls={videoUrls}
+                  setVideoUrls={setVideoUrls}
+                />
+              </div>
+
             </div>
           )}
 
