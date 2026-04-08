@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, Copy, Code } from 'lucide-react'
+import { ChevronLeft, Code } from 'lucide-react'
 import LandingPage from '@/components/landing/LandingPage'
 import type { PortfolioWithContent, Project, Track, Profile } from '@/lib/supabase/types'
 import EmbedCopyButton from '@/components/admin/EmbedCopyButton'
@@ -57,24 +57,10 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
         </a>
       </div>
 
-      {/* Sezione Embed — solo nel backend */}
-      <div className="card card-sm mb-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Code size={15} className="text-[#c8a45a]" />
-          <span className="text-sm font-medium">Codice Embed</span>
-          <span className="text-xs text-[#5a5548] font-mono ml-1">per Systeme.io, WordPress e qualsiasi sito</span>
-        </div>
-        <div className="bg-[#09090f] border border-[#2a2830] rounded-lg px-4 py-3 mb-3 overflow-x-auto">
-          <pre className="font-mono text-[11px] text-[#5a5548] whitespace-pre-wrap break-all">{embedCode}</pre>
-        </div>
-        <div className="flex gap-2 items-center">
-          <EmbedCopyButton embedCode={embedCode} />
-          <span className="text-xs text-[#5a5548]">💡 Su Systeme.io: aggiungi un blocco <strong className="text-[#a09888]">HTML</strong> e incolla il codice</span>
-        </div>
-      </div>
+      {/* Issue 4: PRIMA l'anteprima, POI il codice embed */}
 
-      {/* Frame browser simulato */}
-      <div className="border border-[#2a2830] rounded-2xl overflow-hidden">
+      {/* Frame browser simulato — SOPRA */}
+      <div className="border border-[#2a2830] rounded-2xl overflow-hidden mb-5">
         <div className="flex items-center gap-2 px-4 py-2.5 bg-[#111118] border-b border-[#2a2830]">
           <div className="flex gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
@@ -87,6 +73,22 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
         </div>
         <div className="overflow-y-auto max-h-[70vh]">
           <LandingPage portfolio={pf} profile={profile} preview />
+        </div>
+      </div>
+
+      {/* Sezione Embed — SOTTO */}
+      <div className="card card-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <Code size={15} className="text-[#c8a45a]" />
+          <span className="text-sm font-medium">Codice Embed</span>
+          <span className="text-xs text-[#5a5548] font-mono ml-1">per Systeme.io, WordPress e qualsiasi sito</span>
+        </div>
+        <div className="bg-[#09090f] border border-[#2a2830] rounded-lg px-4 py-3 mb-3 overflow-x-auto">
+          <pre className="font-mono text-[11px] text-[#5a5548] whitespace-pre-wrap break-all">{embedCode}</pre>
+        </div>
+        <div className="flex gap-2 items-center">
+          <EmbedCopyButton embedCode={embedCode} />
+          <span className="text-xs text-[#5a5548]">💡 Su Systeme.io: aggiungi un blocco <strong className="text-[#a09888]">HTML</strong> e incolla il codice</span>
         </div>
       </div>
 
