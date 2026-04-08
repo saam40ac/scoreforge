@@ -44,9 +44,11 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
   const [noindex,     setNoindex]     = useState(portfolio?.noindex     ?? false)
   const [dlDisabled,  setDlDisabled]  = useState(portfolio?.downloads_disabled ?? true)
   const [saving,      setSaving]      = useState(false)
-  const [activeTab,   setActiveTab]   = useState<'general'|'content'|'media'|'share'>('general')
+  const [activeTab,   setActiveTab]   = useState<'general'|'content'|'media'|'share'|'structure'>('general')
   const [isDirty,     setIsDirty]     = useState(false)
   const [bannerUrl,   setBannerUrl]   = useState<string>((portfolio as any)?.banner_url ?? '')
+  const [sectionOrder,  setSectionOrder]  = useState<string[]>((portfolio as any)?.section_order ?? ['bio','projects','tracks','videos'])
+  const [sectionTitles, setSectionTitles] = useState<Record<string,string>>((portfolio as any)?.section_titles ?? {})
 
   // Projects & tracks (gestiti localmente e salvati insieme al portfolio)
   const [projects, setProjects] = useState(portfolio?.projects ?? [])
@@ -92,6 +94,8 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
           theme: theme as 'dark'|'ivory'|'neon', accent_color: accentColor,
           target, description, bio, video_url: videoUrl, video_urls: videoUrls, noindex, downloads_disabled: dlDisabled,
           banner_url: bannerUrl || null,
+          section_order: sectionOrder,
+          section_titles: sectionTitles,
         }).eq('id', portfolioId!)
         if (error) throw error
       }
@@ -176,7 +180,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
         <div>
           {/* Tabs */}
           <div className="flex gap-0.5 border-b border-[#2a2830] mb-6 overflow-x-auto">
-            {(['general','content','media','share'] as const).map(tab => (
+            {(['general','content','media','share','structure'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -186,7 +190,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                     : 'border-transparent text-[#5a5548] hover:text-[#a09888]'
                 }`}
               >
-                {{ general: 'Generale', content: 'Contenuti', media: 'Media & Video', share: 'Condivisione' }[tab]}
+                {{ general: 'Generale', content: 'Contenuti', media: 'Media & Video', share: 'Condivisione', structure: 'Struttura ✦' }[tab]}
               </button>
             ))}
           </div>
@@ -434,6 +438,82 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
           )}
         </div>
 
+
+          {/* TAB: STRUTTURA — Bug 23 + Bug 24 */}
+          {activeTab === 'structure' && (
+            <div className="space-y-6 animate-fadein">
+
+              {/* Ordine sezioni */}
+              <div>
+                <label className="field-label mb-1">Ordine delle sezioni</label>
+                <p className="text-xs text-[#5a5548] mb-3">Trascina con le frecce su/giù per cambiare l'ordine in cui appaiono nella tua landing page.</p>
+                <div className="space-y-2">
+                  {sectionOrder.map((key, i) => {
+                    const labels: Record<string,string> = { bio:'Chi sono / Bio', projects:'Lavori / Progetti', tracks:'Audio / Tracce', videos:'Video / Showreel' }
+                    const icons: Record<string,string>  = { bio:'👤', projects:'🎬', tracks:'🎵', videos:'📹' }
+                    return (
+                      <div key={key} className="flex items-center gap-3 bg-[#17171f] border border-[#2a2830] rounded-xl px-3 py-2.5">
+                        <span style={{ fontSize:18 }}>{icons[key] || '◻'}</span>
+                        <span className="flex-1 text-sm text-[#f0ebe0]">{labels[key] || key}</span>
+                        <div className="flex flex-col gap-0.5">
+                          <button
+                            disabled={i === 0}
+                            onClick={() => {
+                              const next = [...sectionOrder]
+                              ;[next[i-1], next[i]] = [next[i], next[i-1]]
+                              setSectionOrder(next); setIsDirty(true)
+                            }}
+                            className="text-[#5a5548] hover:text-[#c8a45a] disabled:opacity-20 text-xs leading-none px-1"
+                            title="Sposta su"
+                          >▲</button>
+                          <button
+                            disabled={i === sectionOrder.length - 1}
+                            onClick={() => {
+                              const next = [...sectionOrder]
+                              ;[next[i], next[i+1]] = [next[i+1], next[i]]
+                              setSectionOrder(next); setIsDirty(true)
+                            }}
+                            className="text-[#5a5548] hover:text-[#c8a45a] disabled:opacity-20 text-xs leading-none px-1"
+                            title="Sposta giù"
+                          >▼</button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Titoli sezioni */}
+              <div className="border-t border-[#2a2830] pt-5">
+                <label className="field-label mb-1">Personalizza i titoli delle sezioni</label>
+                <p className="text-xs text-[#5a5548] mb-3">Lascia vuoto per usare il titolo predefinito.</p>
+                <div className="space-y-3">
+                  {[
+                    { key:'bio',          label:'Chi sono — etichetta tag',      default:'Chi sono' },
+                    { key:'projects_tag', label:'Progetti — etichetta tag',      default:'Lavori selezionati' },
+                    { key:'projects',     label:'Progetti — titolo sezione',     default:'Progetti' },
+                    { key:'tracks_tag',   label:'Audio — etichetta tag',         default:'Composizioni' },
+                    { key:'tracks',       label:'Audio — titolo sezione',        default:'Ascolta il mio lavoro' },
+                    { key:'videos_tag',   label:'Video — etichetta tag',         default:'Video' },
+                    { key:'videos',       label:'Video — titolo sezione',        default:'Showreel' },
+                  ].map(f => (
+                    <div key={f.key} className="grid grid-cols-[1fr_2fr] gap-3 items-center">
+                      <label className="text-xs text-[#5a5548]">{f.label}</label>
+                      <input
+                        className="field-input text-sm"
+                        value={sectionTitles[f.key] || ''}
+                        onChange={e => {
+                          setSectionTitles(prev => ({ ...prev, [f.key]: e.target.value }))
+                          setIsDirty(true)
+                        }}
+                        placeholder={f.default}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         {/* Sidebar editor */}
         <div className="space-y-4">
           <div className="card card-sm">
