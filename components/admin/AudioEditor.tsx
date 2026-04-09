@@ -114,6 +114,20 @@ export default function AudioEditor({ fileUrl, fileName, onClose, onSave }: Prop
     setPlayheadPct(0)
   }
 
+  // Funzione riutilizzata sia da startPlay che da exportAudio
+  function applyFadeScheduling(gn: GainNode | any, now: number, selD: number, fi: number, fo: number) {
+    gn.gain.cancelScheduledValues(now)
+    gn.gain.setValueAtTime(fi > 0 ? 0 : 1, now)
+    if (fi > 0) {
+      gn.gain.linearRampToValueAtTime(1, now + Math.min(fi, selD * 0.8))
+    }
+    if (fo > 0) {
+      const foStart = Math.max(now + (fi > 0 ? Math.min(fi, selD * 0.8) : 0), now + selD - fo)
+      gn.gain.setValueAtTime(1, foStart)
+      gn.gain.linearRampToValueAtTime(0.001, now + selD)
+    }
+  }
+
   function startPlay() {
     if (!buffer || !audioCtxRef.current) return
     stopPlay()
@@ -126,7 +140,10 @@ export default function AudioEditor({ fileUrl, fileName, onClose, onSave }: Prop
     const s    = selStartRef.current * dur
     const e    = selEndRef.current   * dur
     const selD = e - s
-    startTimeRef.current = ac.currentTime
+    const now  = ac.currentTime
+    // Applica fade anche in anteprima
+    applyFadeScheduling(gn, now, selD, fadeIn, fadeOut)
+    startTimeRef.current = now
     src.start(0, s, selD)
     sourceRef.current = src; gainRef.current = gn
     setIsPlaying(true)
@@ -186,18 +203,7 @@ export default function AudioEditor({ fileUrl, fileName, onClose, onSave }: Prop
       const gn  = offCtx.createGain()
       src.buffer = srcBuf; src.connect(gn); gn.connect(offCtx.destination)
       const now = offCtx.currentTime
-      // Imposta sempre il valore iniziale esplicito — necessario per OfflineAudioContext
-      gn.gain.setValueAtTime(fadeIn > 0 ? 0 : 1, now)
-      // Fade-in: da 0 a 1
-      if (fadeIn > 0) {
-        gn.gain.linearRampToValueAtTime(1, now + Math.min(fadeIn, selD * 0.8))
-      }
-      // Fade-out: da 1 a 0 (schedula dopo il fade-in se presente)
-      if (fadeOut > 0) {
-        const foStart = Math.max(now + (fadeIn > 0 ? Math.min(fadeIn, selD * 0.8) : 0), now + selD - fadeOut)
-        gn.gain.setValueAtTime(1, foStart)
-        gn.gain.linearRampToValueAtTime(0.001, now + selD)
-      }
+      applyFadeScheduling(gn, now, selD, fadeIn, fadeOut)
       src.start(0)
       const rendered = await offCtx.startRendering()
       const blob = bufToWav(rendered)
