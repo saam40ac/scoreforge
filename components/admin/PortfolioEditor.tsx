@@ -293,19 +293,25 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
               <div>
                 <label className="field-label">Biografia (per questo portfolio)</label>
                 <textarea className="field-input field-textarea" style={{ minHeight: 120 }} value={bio} onChange={e => setBio(e.target.value)} placeholder="Descrivi il tuo percorso artistico per questo target specifico…" />
-                <div className="flex gap-2 mt-1 flex-wrap">
-                  {(profileShortBio || profileBio) && (
-                    <button onClick={() => { setBio(profileShortBio || profileBio); setIsDirty(true) }}
-                      className="text-xs text-[#c8a45a] hover:underline">
-                      ↳ Usa bio breve
-                    </button>
-                  )}
-                  {profileLongBio && (
-                    <button onClick={() => { setBio(profileLongBio); setIsDirty(true) }}
-                      className="text-xs text-[#c8a45a] hover:underline">
-                      ↳ Usa bio estesa
-                    </button>
-                  )}
+                <div className="flex gap-2 mt-2 flex-wrap items-center">
+                  <span className="text-[10px] text-[#5a5548] font-mono uppercase tracking-wide">Importa dal profilo:</span>
+                  <button
+                    onClick={() => { const v = profileShortBio || profileBio; if (v) { setBio(v); setIsDirty(true) } }}
+                    disabled={!profileShortBio && !profileBio}
+                    className="text-xs text-[#c8a45a] hover:underline disabled:opacity-30 disabled:cursor-not-allowed"
+                    title={(profileShortBio || profileBio) ? `Bio breve: "${(profileShortBio || profileBio).slice(0,60)}…"` : 'Nessuna bio breve nel profilo'}
+                  >
+                    ↳ Bio breve
+                  </button>
+                  <span className="text-[#3a3648] text-xs">·</span>
+                  <button
+                    onClick={() => { if (profileLongBio) { setBio(profileLongBio); setIsDirty(true) } }}
+                    disabled={!profileLongBio}
+                    className="text-xs text-[#c8a45a] hover:underline disabled:opacity-30 disabled:cursor-not-allowed"
+                    title={profileLongBio ? `Bio estesa: "${profileLongBio.slice(0,60)}…"` : 'Nessuna bio estesa nel profilo'}
+                  >
+                    ↳ Bio estesa
+                  </button>
                 </div>
               </div>
 
@@ -449,6 +455,19 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Upload tracce audio direttamente da Contenuti */}
+              <div className="border-t border-[#2a2830] pt-5">
+                <label className="field-label mb-1">Carica tracce audio</label>
+                <p className="text-xs text-[#5a5548] mb-3">Carica i file audio qui oppure dalla sezione Media &amp; Video.</p>
+                {portfolio ? (
+                  <AudioUploader portfolioId={portfolio.id} userId={userId} />
+                ) : (
+                  <div className="bg-[#17171f] border border-[#2a2830] rounded-xl p-4 text-center text-sm text-[#5a5548]">
+                    Salva prima il portfolio (tab Generale) per abilitare il caricamento.
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -669,3 +688,4 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
     </div>
   )
 }
+
