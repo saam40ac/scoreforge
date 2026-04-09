@@ -29,6 +29,7 @@ export default function VideoManager({
   const [uploadPct,  setUploadPct]  = useState(0)
   const [savingEmbed,setSavingEmbed]= useState(false)
   const [newEmbed,   setNewEmbed]   = useState('')
+  const [dragOverVideoIdx, setDragOverVideoIdx] = useState<number | null>(null)
 
   const isNew = !portfolioId || portfolioId === 'new'
 
@@ -41,6 +42,24 @@ export default function VideoManager({
       isEmbed: u.includes('youtube') || u.includes('vimeo'),
     })),
   ]
+
+  // ── Riordina video ───────────────────────────────────────────
+  async function reorderVideos(fromIdx: number, toIdx: number) {
+    const all = [
+      ...(videoUrl ? [videoUrl] : []),
+      ...videoUrls,
+    ]
+    const [moved] = all.splice(fromIdx, 1)
+    all.splice(toIdx, 0, moved)
+    const nextUrl  = all[0] || ''
+    const nextUrls = all.slice(1)
+    const ok = await persistVideos(nextUrl, nextUrls)
+    if (ok !== false) {
+      setVideoUrl(nextUrl)
+      setVideoUrls(nextUrls)
+    }
+    setDragOverVideoIdx(null)
+  }
 
   // ── Salva video_url e video_urls direttamente nel DB ─────────
   async function persistVideos(newVideoUrl: string, newVideoUrls: string[]) {
@@ -211,7 +230,17 @@ export default function VideoManager({
             {allVideos.map((v, i) => {
               const thumb = v.isEmbed ? getYouTubeThumb(v.url) : null
               return (
-                <div key={i} className="flex items-center gap-3 bg-[#17171f] border border-[#2a2830] rounded-xl p-3">
+                <div key={i}
+                  draggable
+                  onDragStart={e => { e.dataTransfer.setData('videoIdx', String(i)); e.dataTransfer.effectAllowed = 'move' }}
+                  onDragOver={e => { e.preventDefault(); setDragOverVideoIdx(i) }}
+                  onDragLeave={() => setDragOverVideoIdx(null)}
+                  onDrop={e => { e.preventDefault(); const from = parseInt(e.dataTransfer.getData('videoIdx')); if (from !== i) reorderVideos(from, i) }}
+                  style={{ opacity: dragOverVideoIdx === i ? 0.6 : 1, transition: 'opacity .15s' }}
+                >
+                <div className="flex items-center gap-3 bg-[#17171f] border border-[#2a2830] rounded-xl p-3"
+                  style={{ borderColor: dragOverVideoIdx === i ? '#c8a45a' : undefined }}>
+                  <span className="text-[#3a3648] text-sm cursor-grab select-none" title="Trascina per riordinare">⠿</span>
                   <div className="w-20 h-12 rounded-lg overflow-hidden bg-[#09090f] flex-shrink-0 flex items-center justify-center border border-[#2a2830]">
                     {thumb
                       ? <img src={thumb} alt="" className="w-full h-full object-cover" />
@@ -242,6 +271,7 @@ export default function VideoManager({
                   >
                     <Trash2 size={13} />
                   </button>
+                </div>
                 </div>
               )
             })}
