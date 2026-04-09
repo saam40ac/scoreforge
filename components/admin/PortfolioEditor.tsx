@@ -148,7 +148,16 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
   function addTrack() {
     setTracks(prev => [...prev, { id: '', portfolio_id: portfolio?.id ?? '', title: 'Nuova Traccia', genre: 'Orchestral', duration_label: '0:00', file_url: null, waveform_data: null, sort_order: prev.length, play_count: 0, created_at: '' }])
   }
-  function removeTrack(i: number) { setTracks(prev => prev.filter((_, idx) => idx !== i)) }
+  async function removeTrack(i: number) {
+    const t = tracks[i]
+    // Se la traccia ha un ID nel DB, cancellala anche lì
+    if (t?.id) {
+      await supabase.from('tracks').delete().eq('id', t.id)
+    }
+    setTracks(prev => prev.filter((_, idx) => idx !== i))
+    setIsDirty(true)
+    if (editingTrackIdx === i) setEditingTrackIdx(null)
+  }
   function updateTrack(i: number, field: string, value: string) {
     setTracks(prev => prev.map((t, idx) => idx === i ? { ...t, [field]: value } : t))
   }
@@ -341,7 +350,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                 <div className="space-y-2">
                   {tracks.length === 0 && <p className="text-sm text-[#5a5548] py-2">Nessuna traccia. Aggiungine una!</p>}
                   {tracks.map((t, i) => (
-                    <div key={i}>
+                    <div key={t.id || `new-${i}`}>
                       <div className="flex gap-2 bg-[#17171f] border border-[#2a2830] rounded-lg px-3 py-2">
                         <span className="text-[#5a5548] text-sm pt-0.5">♪</span>
                         <input className="flex-1 bg-transparent text-sm text-[#f0ebe0] outline-none" value={t.title} onChange={e => updateTrack(i, 'title', e.target.value)} placeholder="Titolo traccia" />
@@ -356,7 +365,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                             <Scissors size={13} />
                           </button>
                         )}
-                        <button onClick={() => { removeTrack(i); if (editingTrackIdx === i) setEditingTrackIdx(null) }} className="text-[#5a5548] hover:text-[#c94b4b] transition-colors flex-shrink-0">
+                        <button onClick={() => removeTrack(i)} className="text-[#5a5548] hover:text-[#c94b4b] transition-colors flex-shrink-0">
                           <X size={14} />
                         </button>
                       </div>
