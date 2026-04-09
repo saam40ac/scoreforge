@@ -367,16 +367,29 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                             fileName={`${t.title || 'traccia'}.wav`}
                             onClose={() => setEditingTrackIdx(null)}
                             onSave={async (blob, newName) => {
-                              const path = `${userId}/${portfolio?.id ?? 'new'}/${Date.now()}-${newName}`
-                              const { data, error } = await supabase.storage
-                                .from('scoreforge-media')
-                                .upload(path, blob, { upsert: true })
-                              if (error) { toast.error('Errore upload: ' + error.message); return }
-                              const { data: urlData } = supabase.storage.from('scoreforge-media').getPublicUrl(data.path)
-                              updateTrack(i, 'file_url', urlData.publicUrl)
-                              setIsDirty(true)
-                              setEditingTrackIdx(null)
-                              toast.success('Traccia aggiornata con la versione editata!')
+                              if (!portfolio?.id) {
+                                toast.error('Salva prima il portfolio, poi modifica le tracce.')
+                                return
+                              }
+                              try {
+                                const path = `${userId}/${portfolio.id}/edited/${Date.now()}-${newName}`
+                                const { data, error } = await supabase.storage
+                                  .from('scoreforge-media')
+                                  .upload(path, blob, { upsert: true, contentType: 'audio/wav' })
+                                if (error) { toast.error('Errore upload: ' + error.message); return }
+                                const { data: urlData } = supabase.storage.from('scoreforge-media').getPublicUrl(data.path)
+                                const newUrl = urlData.publicUrl
+                                // Aggiorna la traccia nel DB direttamente
+                                if (tracks[i]?.id) {
+                                  await supabase.from('tracks').update({ file_url: newUrl, waveform_data: null }).eq('id', tracks[i].id)
+                                }
+                                updateTrack(i, 'file_url', newUrl)
+                                setIsDirty(true)
+                                setEditingTrackIdx(null)
+                                toast.success('Traccia aggiornata con la versione editata!')
+                              } catch (err: any) {
+                                toast.error('Errore: ' + (err?.message || 'Upload fallito'))
+                              }
                             }}
                           />
                         </div>
