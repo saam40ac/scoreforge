@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import PortfolioEditor from '@/components/admin/PortfolioEditor'
+import type { PortfolioWithContent, Project, Track } from '@/lib/supabase/types'
 
 export default async function EditPortfolioPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -16,22 +17,27 @@ export default async function EditPortfolioPage({ params }: { params: Promise<{ 
 
   if (!portfolio) notFound()
 
+  const pf = portfolio as unknown as PortfolioWithContent
+  pf.projects = ((pf.projects ?? []) as Project[]).sort((a, b) => a.sort_order - b.sort_order)
+  pf.tracks   = ((pf.tracks   ?? []) as Track[]).sort((a, b) => a.sort_order - b.sort_order)
+
+  // Carica ENTRAMBE le bio dal profilo
   const { data: profile } = await supabase
     .from('profiles')
     .select('short_bio, long_bio')
     .eq('id', user!.id)
     .single()
 
-  // Ordina per sort_order
-  portfolio.projects = portfolio.projects?.sort((a: {sort_order:number}, b: {sort_order:number}) => a.sort_order - b.sort_order) ?? []
-  portfolio.tracks   = portfolio.tracks?.sort((a: {sort_order:number}, b: {sort_order:number}) => a.sort_order - b.sort_order) ?? []
+  const p = profile as { short_bio?: string; long_bio?: string } | null
 
   return (
     <div className="p-6 lg:p-8">
       <PortfolioEditor
-        portfolio={portfolio}
+        portfolio={pf}
         userId={user!.id}
-        profileBio={[profile?.short_bio, profile?.long_bio].filter(Boolean).join('\n\n')}
+        profileBio={p?.short_bio || ''}
+        profileShortBio={p?.short_bio || ''}
+        profileLongBio={p?.long_bio  || ''}
       />
     </div>
   )
