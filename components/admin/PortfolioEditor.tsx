@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Plus, X, ChevronLeft, Eye, Save } from 'lucide-react'
+import { Plus, X, ChevronLeft, Eye, Save, Scissors } from 'lucide-react'
 import type { PortfolioWithContent } from '@/lib/supabase/types'
 import AudioUploader from './AudioUploader'
+import AudioEditor from './AudioEditor'
 import VideoManager from './VideoManager'
 
 const ACCENT_COLORS = ['#c8a45a','#c94b4b','#4b8bc9','#4bb87a','#9b71c9','#e67e22']
@@ -46,6 +47,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
   const [saving,      setSaving]      = useState(false)
   const [activeTab,   setActiveTab]   = useState<'general'|'content'|'media'|'share'|'structure'>('general')
   const [isDirty,     setIsDirty]     = useState(false)
+  const [editingTrackIdx, setEditingTrackIdx] = useState<number | null>(null)
   const [bannerUrl,   setBannerUrl]   = useState<string>((portfolio as any)?.banner_url ?? '')
   const [sectionOrder,  setSectionOrder]  = useState<string[]>((portfolio as any)?.section_order ?? ['bio','projects','tracks','videos'])
   const [sectionTitles, setSectionTitles] = useState<Record<string,string>>((portfolio as any)?.section_titles ?? {})
@@ -339,12 +341,46 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                 <div className="space-y-2">
                   {tracks.length === 0 && <p className="text-sm text-[#5a5548] py-2">Nessuna traccia. Aggiungine una!</p>}
                   {tracks.map((t, i) => (
-                    <div key={i} className="flex gap-2 bg-[#17171f] border border-[#2a2830] rounded-lg px-3 py-2">
-                      <span className="text-[#5a5548] text-sm pt-0.5">♪</span>
-                      <input className="flex-1 bg-transparent text-sm text-[#f0ebe0] outline-none" value={t.title} onChange={e => updateTrack(i, 'title', e.target.value)} placeholder="Titolo traccia" />
-                      <input className="w-24 bg-transparent text-xs text-[#5a5548] font-mono outline-none" value={t.genre ?? ''} onChange={e => updateTrack(i, 'genre', e.target.value)} placeholder="Genere" />
-                      <input className="w-14 bg-transparent text-xs text-[#5a5548] font-mono outline-none text-right" value={t.duration_label ?? ''} onChange={e => updateTrack(i, 'duration_label', e.target.value)} placeholder="3:24" />
-                      <button onClick={() => removeTrack(i)} className="text-[#5a5548] hover:text-[#c94b4b] transition-colors"><X size={14} /></button>
+                    <div key={i}>
+                      <div className="flex gap-2 bg-[#17171f] border border-[#2a2830] rounded-lg px-3 py-2">
+                        <span className="text-[#5a5548] text-sm pt-0.5">♪</span>
+                        <input className="flex-1 bg-transparent text-sm text-[#f0ebe0] outline-none" value={t.title} onChange={e => updateTrack(i, 'title', e.target.value)} placeholder="Titolo traccia" />
+                        <input className="w-24 bg-transparent text-xs text-[#5a5548] font-mono outline-none" value={t.genre ?? ''} onChange={e => updateTrack(i, 'genre', e.target.value)} placeholder="Genere" />
+                        <input className="w-14 bg-transparent text-xs text-[#5a5548] font-mono outline-none text-right" value={t.duration_label ?? ''} onChange={e => updateTrack(i, 'duration_label', e.target.value)} placeholder="3:24" />
+                        {t.file_url && (
+                          <button
+                            onClick={() => setEditingTrackIdx(editingTrackIdx === i ? null : i)}
+                            title="Apri editor audio"
+                            className={`transition-colors flex-shrink-0 ${editingTrackIdx === i ? 'text-[#c8a45a]' : 'text-[#5a5548] hover:text-[#c8a45a]'}`}
+                          >
+                            <Scissors size={13} />
+                          </button>
+                        )}
+                        <button onClick={() => { removeTrack(i); if (editingTrackIdx === i) setEditingTrackIdx(null) }} className="text-[#5a5548] hover:text-[#c94b4b] transition-colors flex-shrink-0">
+                          <X size={14} />
+                        </button>
+                      </div>
+                      {editingTrackIdx === i && t.file_url && (
+                        <div className="mt-2">
+                          <AudioEditor
+                            fileUrl={t.file_url}
+                            fileName={`${t.title || 'traccia'}.wav`}
+                            onClose={() => setEditingTrackIdx(null)}
+                            onSave={async (blob, newName) => {
+                              const path = `${userId}/${portfolio?.id ?? 'new'}/${Date.now()}-${newName}`
+                              const { data, error } = await supabase.storage
+                                .from('scoreforge-media')
+                                .upload(path, blob, { upsert: true })
+                              if (error) { toast.error('Errore upload: ' + error.message); return }
+                              const { data: urlData } = supabase.storage.from('scoreforge-media').getPublicUrl(data.path)
+                              updateTrack(i, 'file_url', urlData.publicUrl)
+                              setIsDirty(true)
+                              setEditingTrackIdx(null)
+                              toast.success('Traccia aggiornata con la versione editata!')
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
