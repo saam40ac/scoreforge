@@ -186,8 +186,18 @@ export default function AudioEditor({ fileUrl, fileName, onClose, onSave }: Prop
       const gn  = offCtx.createGain()
       src.buffer = srcBuf; src.connect(gn); gn.connect(offCtx.destination)
       const now = offCtx.currentTime
-      if (fadeIn  > 0) { gn.gain.setValueAtTime(0, now); gn.gain.linearRampToValueAtTime(1, now + Math.min(fadeIn, selD * 0.9)) }
-      if (fadeOut > 0) { const foStart = Math.max(now, now + selD - fadeOut); gn.gain.setValueAtTime(1, foStart); gn.gain.linearRampToValueAtTime(0, now + selD) }
+      // Imposta sempre il valore iniziale esplicito — necessario per OfflineAudioContext
+      gn.gain.setValueAtTime(fadeIn > 0 ? 0 : 1, now)
+      // Fade-in: da 0 a 1
+      if (fadeIn > 0) {
+        gn.gain.linearRampToValueAtTime(1, now + Math.min(fadeIn, selD * 0.8))
+      }
+      // Fade-out: da 1 a 0 (schedula dopo il fade-in se presente)
+      if (fadeOut > 0) {
+        const foStart = Math.max(now + (fadeIn > 0 ? Math.min(fadeIn, selD * 0.8) : 0), now + selD - fadeOut)
+        gn.gain.setValueAtTime(1, foStart)
+        gn.gain.linearRampToValueAtTime(0.001, now + selD)
+      }
       src.start(0)
       const rendered = await offCtx.startRendering()
       const blob = bufToWav(rendered)
