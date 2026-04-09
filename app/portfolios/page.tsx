@@ -80,7 +80,7 @@ export default async function PortfoliosPage() {
                 </Link>
                 {p.status === 'published' && p.slug && (
                   <CopyLinkButton
-                    url={`${process.env.NEXT_PUBLIC_APP_URL || 'https://www.scoreforge.it'}/${p.slug}`}
+                    url={`${(process.env.NEXT_PUBLIC_APP_URL || 'https://www.scoreforge.it').replace(/\/+$/, '')}/${p.slug}`}
                   />
                 )}
                 <DeletePortfolioButton id={p.id} title={p.title} />
