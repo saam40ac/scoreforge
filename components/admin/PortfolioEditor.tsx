@@ -57,6 +57,28 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
   const [tracks,   setTracks]   = useState(portfolio?.tracks   ?? [])
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
 
+  // Leggi durata reale di ogni traccia audio dal file
+  useEffect(() => {
+    tracks.forEach((t, i) => {
+      if (!t.file_url) return
+      const audio = new Audio()
+      audio.preload = 'metadata'
+      audio.src = t.file_url
+      audio.onloadedmetadata = () => {
+        const s = audio.duration
+        if (!isFinite(s)) return
+        const m = Math.floor(s / 60)
+        const label = `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`
+        setTracks(prev => prev.map((tr, idx) =>
+          idx === i && tr.duration_label !== label
+            ? { ...tr, duration_label: label }
+            : tr
+        ))
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tracks.map(t => t.file_url).join(',')])
+
   // Bug 21: avviso modifiche non salvate
   useEffect(() => {
     if (!isDirty) return
@@ -196,7 +218,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                 key={tab}
                 onClick={() => {
                   if (isDirty && activeTab !== tab) {
-                    if (typeof window !== 'undefined' && !window.confirm('Hai modifiche non salvate. Continuare senza salvare?')) return
+                    if (!window.confirm('Hai modifiche non salvate in questa sezione. Continuare senza salvare?')) return
                   }
                   setActiveTab(tab)
                 }}
@@ -358,6 +380,8 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                   {tracks.length === 0 && <p className="text-sm text-[#5a5548] py-2">Nessuna traccia. Aggiungine una!</p>}
                   {tracks.map((t, i) => (
                     <div key={t.id || `new-${i}`}
+                      draggable
+                      onDragStart={e => { e.dataTransfer.setData('trackIdx', String(i)); e.dataTransfer.effectAllowed = 'move' }}
                       onDragOver={e => { e.preventDefault(); setDragOverIdx(i) }}
                       onDragLeave={() => setDragOverIdx(null)}
                       onDrop={e => {
@@ -376,32 +400,18 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                     >
                       <div className="flex gap-2 bg-[#17171f] border border-[#2a2830] rounded-lg px-3 py-2"
                         style={{ borderColor: dragOverIdx === i ? '#c8a45a' : undefined }}>
-                        {/* Fix 2: drag solo dalla maniglia — non dall'intero div */}
-                        <span
-                          className="text-[#5a5548] text-sm pt-0.5 cursor-grab select-none hover:text-[#c8a45a] transition-colors"
-                          title="Trascina per riordinare"
-                          draggable
-                          onDragStart={e => { e.stopPropagation(); e.dataTransfer.setData('trackIdx', String(i)); e.dataTransfer.effectAllowed = 'move' }}
-                        >⠿</span>
+                        <span className="text-[#3a3648] text-sm pt-0.5 cursor-grab select-none" title="Trascina per riordinare">⠿</span>
                         <span className="text-[#5a5548] text-sm pt-0.5">♪</span>
                         <input className="flex-1 bg-transparent text-sm text-[#f0ebe0] outline-none" value={t.title} onChange={e => updateTrack(i, 'title', e.target.value)} placeholder="Titolo traccia" />
                         <input className="w-24 bg-transparent text-xs text-[#5a5548] font-mono outline-none" value={t.genre ?? ''} onChange={e => updateTrack(i, 'genre', e.target.value)} placeholder="Genere" />
                         <input className="w-14 bg-transparent text-xs text-[#5a5548] font-mono outline-none text-right" value={t.duration_label ?? ''} onChange={e => updateTrack(i, 'duration_label', e.target.value)} placeholder="3:24" />
-                        {/* Fix 1: bottone editor audio più visibile con label */}
                         {t.file_url && (
                           <button
                             onClick={() => setEditingTrackIdx(editingTrackIdx === i ? null : i)}
-                            title={editingTrackIdx === i ? 'Chiudi editor audio' : 'Ritaglia · Fade-in · Fade-out'}
-                            className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs flex-shrink-0 transition-all border ${
-                              editingTrackIdx === i
-                                ? 'bg-[#c8a45a20] border-[#c8a45a44] text-[#c8a45a]'
-                                : 'border-[#3a3648] text-[#5a5548] hover:border-[#c8a45a44] hover:text-[#c8a45a]'
-                            }`}
+                            title="Apri editor audio"
+                            className={`transition-colors flex-shrink-0 ${editingTrackIdx === i ? 'text-[#c8a45a]' : 'text-[#5a5548] hover:text-[#c8a45a]'}`}
                           >
-                            <Scissors size={11} />
-                            <span className="font-mono" style={{ fontSize: '9px', letterSpacing: '.05em' }}>
-                              {editingTrackIdx === i ? 'CHIUDI' : 'EDIT'}
-                            </span>
+                            <Scissors size={13} />
                           </button>
                         )}
                         <button onClick={() => removeTrack(i)} className="text-[#5a5548] hover:text-[#c94b4b] transition-colors flex-shrink-0">
@@ -634,7 +644,6 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
               </div>
             </div>
           )}
-        </div>
         {/* Sidebar editor */}
         <div className="space-y-4">
           <div className="card card-sm">
