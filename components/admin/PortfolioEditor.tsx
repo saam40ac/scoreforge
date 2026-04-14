@@ -58,10 +58,13 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
 
   // Leggi durata reale di ogni traccia audio dal file
+  // Usiamo una variabile separata per la dipendenza (evita espressioni inline nel dep array)
+  const trackFileUrls = tracks.map(t => t.file_url || '').join(',')
   useEffect(() => {
+    if (typeof window === 'undefined') return
     tracks.forEach((t, i) => {
       if (!t.file_url) return
-      const audio = new Audio()
+      const audio = new window.Audio()
       audio.preload = 'metadata'
       audio.src = t.file_url
       audio.onloadedmetadata = () => {
@@ -77,7 +80,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
       }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tracks.map(t => t.file_url).join(',')])
+  }, [trackFileUrls])
 
   // Bug 21: avviso modifiche non salvate
   useEffect(() => {
@@ -218,7 +221,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                 key={tab}
                 onClick={() => {
                   if (isDirty && activeTab !== tab) {
-                    if (!window.confirm('Hai modifiche non salvate in questa sezione. Continuare senza salvare?')) return
+                    if (typeof window !== 'undefined' && !window.confirm('Hai modifiche non salvate. Continuare senza salvare?')) return
                   }
                   setActiveTab(tab)
                 }}
