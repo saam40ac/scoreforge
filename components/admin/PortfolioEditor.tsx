@@ -57,31 +57,6 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
   const [tracks,   setTracks]   = useState(portfolio?.tracks   ?? [])
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
 
-  // Leggi durata reale di ogni traccia audio dal file
-  // Usiamo una variabile separata per la dipendenza (evita espressioni inline nel dep array)
-  const trackFileUrls = tracks.map(t => t.file_url || '').join(',')
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    tracks.forEach((t, i) => {
-      if (!t.file_url) return
-      const audio = new window.Audio()
-      audio.preload = 'metadata'
-      audio.src = t.file_url
-      audio.onloadedmetadata = () => {
-        const s = audio.duration
-        if (!isFinite(s)) return
-        const m = Math.floor(s / 60)
-        const label = `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`
-        setTracks(prev => prev.map((tr, idx) =>
-          idx === i && tr.duration_label !== label
-            ? { ...tr, duration_label: label }
-            : tr
-        ))
-      }
-    })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackFileUrls])
-
   // Bug 21: avviso modifiche non salvate
   useEffect(() => {
     if (!isDirty) return
