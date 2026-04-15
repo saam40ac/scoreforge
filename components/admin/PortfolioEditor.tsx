@@ -13,9 +13,9 @@ import VideoManager from './VideoManager'
 
 const ACCENT_COLORS = ['#c8a45a','#c94b4b','#4b8bc9','#4bb87a','#9b71c9','#e67e22']
 const THEMES = [
-  { value: 'dark',  label: '🌑 Cinematica Oscura' },
-  { value: 'ivory', label: '🌿 Luxury Ivory' },
-  { value: 'neon',  label: '🟣 Neon Minimal' },
+  { value: 'dark',  label: 'Dark Cinematica Oscura' },
+  { value: 'ivory', label: 'Ivory Luxury Ivory' },
+  { value: 'neon',  label: 'Neon Neon Minimal' },
 ]
 
 interface Props {
@@ -148,7 +148,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
         }
       }
 
-      toast.success('Portfolio salvato! ✓')
+      toast.success('Portfolio salvato! OK')
       setIsDirty(false)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Errore durante il salvataggio.'
@@ -160,7 +160,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
 
   // Gestione progetti
   function addProject() {
-    setProjects(prev => [...prev, { id: '', portfolio_id: portfolio?.id ?? '', title: 'Nuovo Progetto', project_type: 'Cortometraggio', emoji: '🎬', description: null, cover_url: null, sort_order: prev.length, created_at: '' }])
+    setProjects(prev => [...prev, { id: '', portfolio_id: portfolio?.id ?? '', title: 'Nuovo Progetto', project_type: 'Cortometraggio', emoji: '', description: null, cover_url: null, sort_order: prev.length, created_at: '' }])
   }
   function removeProject(i: number) { setProjects(prev => prev.filter((_, idx) => idx !== i)) }
   function updateProject(i: number, field: string, value: string) {
@@ -173,7 +173,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
   }
   async function removeTrack(i: number) {
     const t = tracks[i]
-    // Se la traccia ha un ID nel DB, cancellala anche lì
+    // Se la traccia ha un ID nel DB, cancellala anche li
     if (t?.id) {
       await supabase.from('tracks').delete().eq('id', t.id)
     }
@@ -203,7 +203,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
             </Link>
           )}
           <button onClick={handleSave} disabled={saving} className="btn btn-gold btn-sm disabled:opacity-60" title={isDirty ? 'Hai modifiche non salvate' : ''}>
-            <Save size={13} /> {saving ? 'Salvo…' : isDirty ? 'Salva *' : 'Salva'}
+            <Save size={13} /> {saving ? 'Salvo...' : isDirty ? 'Salva *' : 'Salva'}
           </button>
         </div>
       </div>
@@ -228,7 +228,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                     : 'border-transparent text-[#5a5548] hover:text-[#a09888]'
                 }`}
               >
-                {{ general: 'Generale', content: 'Contenuti', media: 'Media & Video', share: 'Condivisione', structure: 'Struttura ✦' }[tab]}
+                {{ general: 'Generale', content: 'Contenuti', media: 'Media & Video', share: 'Condivisione', structure: 'Struttura ' }[tab]}
               </button>
             ))}
           </div>
@@ -253,7 +253,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
               </div>
               <div>
                 <label className="field-label">Descrizione breve</label>
-                <textarea className="field-input field-textarea" value={description} onChange={e => setDescription(e.target.value)} placeholder="Una frase che descrive questo portfolio…" />
+                <textarea className="field-input field-textarea" value={description} onChange={e => setDescription(e.target.value)} placeholder="Una frase che descrive questo portfolio..." />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -292,25 +292,25 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
             <div className="space-y-6 animate-fadein">
               <div>
                 <label className="field-label">Biografia (per questo portfolio)</label>
-                <textarea className="field-input field-textarea" style={{ minHeight: 120 }} value={bio} onChange={e => setBio(e.target.value)} placeholder="Descrivi il tuo percorso artistico per questo target specifico…" />
+                <textarea className="field-input field-textarea" style={{ minHeight: 120 }} value={bio} onChange={e => setBio(e.target.value)} placeholder="Descrivi il tuo percorso artistico per questo target specifico..." />
                 <div className="flex gap-2 mt-2 flex-wrap items-center">
                   <span className="text-[10px] text-[#5a5548] font-mono uppercase tracking-wide">Importa dal profilo:</span>
                   <button
                     onClick={() => { const v = profileShortBio || profileBio; if (v) { setBio(v); setIsDirty(true) } }}
                     disabled={!profileShortBio && !profileBio}
                     className="text-xs text-[#c8a45a] hover:underline disabled:opacity-30 disabled:cursor-not-allowed"
-                    title={(profileShortBio || profileBio) ? `Bio breve: "${(profileShortBio || profileBio).slice(0,60)}…"` : 'Nessuna bio breve nel profilo'}
+                    title={(profileShortBio || profileBio) ? `Bio breve: "${(profileShortBio || profileBio).slice(0,60)}..."` : 'Nessuna bio breve nel profilo'}
                   >
-                    ↳ Bio breve
+                    -> Bio breve
                   </button>
-                  <span className="text-[#3a3648] text-xs">·</span>
+                  <span className="text-[#3a3648] text-xs">-</span>
                   <button
                     onClick={() => { if (profileLongBio) { setBio(profileLongBio); setIsDirty(true) } }}
                     disabled={!profileLongBio}
                     className="text-xs text-[#c8a45a] hover:underline disabled:opacity-30 disabled:cursor-not-allowed"
-                    title={profileLongBio ? `Bio estesa: "${profileLongBio.slice(0,60)}…"` : 'Nessuna bio estesa nel profilo'}
+                    title={profileLongBio ? `Bio estesa: "${profileLongBio.slice(0,60)}..."` : 'Nessuna bio estesa nel profilo'}
                   >
-                    ↳ Bio estesa
+                    -> Bio estesa
                   </button>
                 </div>
               </div>
@@ -401,17 +401,17 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                         <span
                           className="text-[#5a5548] text-sm pt-0.5 cursor-grab select-none hover:text-[#c8a45a] transition-colors"
                           title="Trascina per riordinare"
-                          draggable
+                          draggable={true}
                           onDragStart={e => { e.stopPropagation(); e.dataTransfer.setData('trackIdx', String(i)); e.dataTransfer.effectAllowed = 'move' }}
-                        >⠿</span>
-                        <span className="text-[#5a5548] text-sm pt-0.5">♪</span>
+                        >{'::'}</span>
+                        <span className="text-[#5a5548] text-sm pt-0.5">{'|'}</span>
                         <input className="flex-1 bg-transparent text-sm text-[#f0ebe0] outline-none" value={t.title} onChange={e => updateTrack(i, 'title', e.target.value)} placeholder="Titolo traccia" />
                         <input className="w-24 bg-transparent text-xs text-[#5a5548] font-mono outline-none" value={t.genre ?? ''} onChange={e => updateTrack(i, 'genre', e.target.value)} placeholder="Genere" />
                         <input className="w-14 bg-transparent text-xs text-[#5a5548] font-mono outline-none text-right" value={t.duration_label ?? ''} onChange={e => updateTrack(i, 'duration_label', e.target.value)} placeholder="3:24" />
                         {t.file_url && (
                           <button
                             onClick={() => setEditingTrackIdx(editingTrackIdx === i ? null : i)}
-                            title={editingTrackIdx === i ? 'Chiudi editor audio' : 'Ritaglia · Fade-in · Fade-out'}
+                            title={editingTrackIdx === i ? 'Chiudi editor audio' : 'Ritaglia - Fade-in - Fade-out'}
                             className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs flex-shrink-0 transition-all border ${
                               editingTrackIdx === i
                                 ? 'bg-[#c8a45a20] border-[#c8a45a44] text-[#c8a45a]'
@@ -486,7 +486,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
           {activeTab === 'media' && (
             <div className="space-y-6 animate-fadein">
 
-              {/* 1. BANNER — primo in assoluto */}
+              {/* 1. BANNER - primo in assoluto */}
               <div>
                 <label className="field-label mb-1">1. Banner / Immagine di copertina</label>
                 <p className="text-xs text-[#5a5548] mb-3">Appare sopra tutto nella tua landing page, come intestazione visiva.</p>
@@ -495,12 +495,12 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                     <img src={bannerUrl} alt="Banner" className="w-full object-cover" style={{ maxHeight: 160 }} />
                     <button onClick={() => { setBannerUrl(''); setIsDirty(true) }}
                       className="absolute top-2 right-2 btn btn-ghost btn-sm btn-icon bg-black/50 text-white hover:bg-red-500/70">
-                      ✕
+                      x
                     </button>
                   </div>
                 )}
                 <label className="btn btn-outline btn-sm cursor-pointer">
-                  📷 {bannerUrl ? 'Cambia banner' : 'Carica banner'}
+                   {bannerUrl ? 'Cambia banner' : 'Carica banner'}
                   <input type="file" accept="image/*" className="hidden"
                     onChange={async e => {
                       const file = e.target.files?.[0]
@@ -579,21 +579,21 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
         </div>
 
 
-          {/* TAB: STRUTTURA — Bug 23 + Bug 24 */}
+          {/* TAB: STRUTTURA - Bug 23 + Bug 24 */}
           {activeTab === 'structure' && (
             <div className="space-y-6 animate-fadein">
 
               {/* Ordine sezioni */}
               <div>
                 <label className="field-label mb-1">Ordine delle sezioni</label>
-                <p className="text-xs text-[#5a5548] mb-3">Trascina con le frecce su/giù per cambiare l'ordine in cui appaiono nella tua landing page.</p>
+                <p className="text-xs text-[#5a5548] mb-3">Trascina con le frecce su/giu per cambiare l'ordine in cui appaiono nella tua landing page.</p>
                 <div className="space-y-2">
                   {sectionOrder.map((key, i) => {
                     const labels: Record<string,string> = { bio:'Chi sono / Bio', projects:'Lavori / Progetti', tracks:'Audio / Tracce', videos:'Video / Showreel' }
-                    const icons: Record<string,string>  = { bio:'👤', projects:'🎬', tracks:'🎵', videos:'📹' }
+                    const icons: Record<string,string>  = { bio:'', projects:'', tracks:'', videos:'' }
                     return (
                       <div key={key} className="flex items-center gap-3 bg-[#17171f] border border-[#2a2830] rounded-xl px-3 py-2.5">
-                        <span style={{ fontSize:18 }}>{icons[key] || '◻'}</span>
+                        <span style={{ fontSize:18 }}>{icons[key] || ''}</span>
                         <span className="flex-1 text-sm text-[#f0ebe0]">{labels[key] || key}</span>
                         <div className="flex flex-col gap-0.5">
                           <button
@@ -605,7 +605,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                             }}
                             className="text-[#5a5548] hover:text-[#c8a45a] disabled:opacity-20 text-xs leading-none px-1"
                             title="Sposta su"
-                          >▲</button>
+                          >^</button>
                           <button
                             disabled={i === sectionOrder.length - 1}
                             onClick={() => {
@@ -614,8 +614,8 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                               setSectionOrder(next); setIsDirty(true)
                             }}
                             className="text-[#5a5548] hover:text-[#c8a45a] disabled:opacity-20 text-xs leading-none px-1"
-                            title="Sposta giù"
-                          >▼</button>
+                            title="Sposta giu"
+                          >v</button>
                         </div>
                       </div>
                     )
@@ -629,13 +629,13 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                 <p className="text-xs text-[#5a5548] mb-3">Lascia vuoto per usare il titolo predefinito.</p>
                 <div className="space-y-3">
                   {[
-                    { key:'bio',          label:'Chi sono — etichetta tag',      default:'Chi sono' },
-                    { key:'projects_tag', label:'Progetti — etichetta tag',      default:'Lavori selezionati' },
-                    { key:'projects',     label:'Progetti — titolo sezione',     default:'Progetti' },
-                    { key:'tracks_tag',   label:'Audio — etichetta tag',         default:'Composizioni' },
-                    { key:'tracks',       label:'Audio — titolo sezione',        default:'Ascolta il mio lavoro' },
-                    { key:'videos_tag',   label:'Video — etichetta tag',         default:'Video' },
-                    { key:'videos',       label:'Video — titolo sezione',        default:'Showreel' },
+                    { key:'bio',          label:'Chi sono - etichetta tag',      default:'Chi sono' },
+                    { key:'projects_tag', label:'Progetti - etichetta tag',      default:'Lavori selezionati' },
+                    { key:'projects',     label:'Progetti - titolo sezione',     default:'Progetti' },
+                    { key:'tracks_tag',   label:'Audio - etichetta tag',         default:'Composizioni' },
+                    { key:'tracks',       label:'Audio - titolo sezione',        default:'Ascolta il mio lavoro' },
+                    { key:'videos_tag',   label:'Video - etichetta tag',         default:'Video' },
+                    { key:'videos',       label:'Video - titolo sezione',        default:'Showreel' },
                   ].map(f => (
                     <div key={f.key} className="grid grid-cols-[1fr_2fr] gap-3 items-center">
                       <label className="text-xs text-[#5a5548]">{f.label}</label>
@@ -660,13 +660,13 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
           <div className="card card-sm">
             <div className="field-label mb-2">Stato pubblicazione</div>
             <select className="field-input field-select" value={status} onChange={e => setStatus(e.target.value)}>
-              <option value="draft">📝 Bozza</option>
-              <option value="published">✅ Pubblicato</option>
-              <option value="private">🔒 Privato</option>
+              <option value="draft">Draft Bozza</option>
+              <option value="published">OK Pubblicato</option>
+              <option value="private">Lock Privato</option>
             </select>
             <div className="border-t border-[#2a2830] my-4" />
             <button onClick={handleSave} disabled={saving} className="btn btn-gold w-full justify-center disabled:opacity-60">
-              <Save size={13} /> {saving ? 'Salvo…' : 'Salva Modifiche'}
+              <Save size={13} /> {saving ? 'Salvo...' : 'Salva Modifiche'}
             </button>
             {!isNew && (
               <Link href={`/portfolios/${portfolio.id}/preview`} className="btn btn-outline w-full justify-center mt-2">
