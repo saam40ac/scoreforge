@@ -643,8 +643,8 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
               </div>
             </div>
           )}
-          </div>
-      {/* Sidebar editor */}
+
+        {/* Sidebar editor */}
         <div className="space-y-4">
           <div className="card card-sm">
             <div className="field-label mb-2">Stato pubblicazione</div>
