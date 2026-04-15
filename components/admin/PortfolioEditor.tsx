@@ -643,7 +643,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
               </div>
             </div>
           )}
-        	<div>
+      </div>div>
         {/* Sidebar editor */}
         <div className="space-y-4">
           <div className="card card-sm">
