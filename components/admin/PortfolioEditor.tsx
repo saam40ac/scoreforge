@@ -228,7 +228,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                     : 'border-transparent text-[#5a5548] hover:text-[#a09888]'
                 }`}
               >
-                {{ general: 'Generale', content: 'Contenuti', media: 'Media & Video', share: 'Condivisione', structure: 'Struttura ✦' }[tab]}
+                {{ general: 'Generale', content: 'Contenuti', media: 'Media & Video', share: 'Condivisione', structure: 'Struttura' }[tab]}
               </button>
             ))}
           </div>
