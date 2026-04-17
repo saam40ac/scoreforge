@@ -566,6 +566,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
             </div>
           )}
 
+
           {/* TAB: STRUTTURA — Bug 23 + Bug 24 */}
           {activeTab === 'structure' && (
             <div className="space-y-6 animate-fadein">
@@ -640,9 +641,9 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                 </div>
               </div>
             </div>
+        </div>
           )}
 
-        </div>
         {/* Sidebar editor */}
         <div className="space-y-4">
           <div className="card card-sm">
@@ -684,7 +685,6 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
           )}
         </div>
       </div>
-    </div>
     </div>
   )
 }
