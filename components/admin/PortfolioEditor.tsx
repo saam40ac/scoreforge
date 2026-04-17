@@ -228,7 +228,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
                     : 'border-transparent text-[#5a5548] hover:text-[#a09888]'
                 }`}
               >
-                {{ general: 'Generale', content: 'Contenuti', media: 'Media & Video', share: 'Condivisione', structure: 'Struttura' }[tab]}
+                {{ general: 'Generale', content: 'Contenuti', media: 'Media & Video', share: 'Condivisione', structure: 'Struttura ✦' }[tab]}
               </button>
             ))}
           </div>
@@ -565,8 +565,6 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
               </div>
             </div>
           )}
-        </div>
-
 
           {/* TAB: STRUTTURA — Bug 23 + Bug 24 */}
           {activeTab === 'structure' && (
@@ -644,6 +642,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
             </div>
           )}
 
+        </div>
         {/* Sidebar editor */}
         <div className="space-y-4">
           <div className="card card-sm">
@@ -685,6 +684,7 @@ export default function PortfolioEditor({ portfolio, userId, profileBio, profile
           )}
         </div>
       </div>
+    </div>
     </div>
   )
 }
