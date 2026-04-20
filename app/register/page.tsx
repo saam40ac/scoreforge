@@ -59,9 +59,9 @@ function RegisterForm() {
         status: 'active',
       })
 
-      // Piano free → dashboard direttamente
+      // Piano free → pagina "controlla la tua email"
       if (selectedPlan === 'free') {
-        router.push('/dashboard')
+        router.push('/register/check-email')
         return
       }
 
