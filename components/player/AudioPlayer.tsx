@@ -170,7 +170,7 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
         {playing ? '⏸' : '▶'}
       </button>
 
-      <div style={{ minWidth:'80px', maxWidth:'140px', flexShrink:1, overflow:'hidden' }}>
+      <div style={{ minWidth:'70px', maxWidth:'130px', flexShrink:1, overflow:'hidden' }}>
         <div style={{ fontSize:'13px', fontWeight:500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
           {track.title}
         </div>
@@ -179,11 +179,11 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
         </div>
       </div>
 
-      <div style={{ flex:1, minWidth:0, position:'relative', cursor:'pointer' }} onClick={handlePlay}>
+      <div style={{ flex:1, minWidth:0, position:'relative', cursor:'pointer', overflow:'hidden' }} onClick={handlePlay}>
         <div ref={containerRef} style={{ width:'100%' }}>
           {!track.file_url && (
             <div style={{ height:'36px', display:'flex', alignItems:'center', gap:'1.5px' }}>
-              {Array.from({ length:32 }, (_, i) => (
+              {Array.from({ length:16 }, (_, i) => (
                 <div key={i} style={{ flex:1, height:`${Math.round(8 + Math.sin(i * 0.9) * 10 + (i % 3) * 4)}px`, background:`${accentColor}35`, borderRadius:'1px' }} />
               ))}
             </div>
