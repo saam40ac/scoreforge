@@ -45,11 +45,10 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
         waveColor:     `${accentColor}45`,
         progressColor: accentColor,
         cursorColor:   accentColor,
-        height:        40,
+        height:        36,
         barWidth:      2,
         barGap:        1.5,
         barRadius:     2,
-        normalize:     true,
         backend:       'WebAudio',
       })
 
@@ -171,7 +170,7 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
         {playing ? '⏸' : '▶'}
       </button>
 
-      <div style={{ width:'140px', flexShrink:0 }}>
+      <div style={{ minWidth:'80px', maxWidth:'140px', flexShrink:1, overflow:'hidden' }}>
         <div style={{ fontSize:'13px', fontWeight:500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
           {track.title}
         </div>
@@ -180,8 +179,8 @@ export default function AudioPlayer({ track, accentColor, theme, portfolioId, sh
         </div>
       </div>
 
-      <div style={{ flex:1, position:'relative', cursor:'pointer', minWidth:0 }} onClick={handlePlay}>
-        <div ref={containerRef} style={{ width:'100%', overflow:'visible', minHeight:'40px' }}>
+      <div style={{ flex:1, minWidth:0, position:'relative', cursor:'pointer' }} onClick={handlePlay}>
+        <div ref={containerRef} style={{ width:'100%' }}>
           {!track.file_url && (
             <div style={{ height:'36px', display:'flex', alignItems:'center', gap:'1.5px' }}>
               {Array.from({ length:32 }, (_, i) => (
