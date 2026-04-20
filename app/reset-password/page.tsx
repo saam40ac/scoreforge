@@ -2,12 +2,13 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 function ResetForm() {
-  const supabase = createClient()
-  const router   = useRouter()
+  const supabase     = createClient()
+  const router       = useRouter()
+  const searchParams = useSearchParams()
   const [password, setPassword] = useState('')
   const [confirm,  setConfirm]  = useState('')
   const [loading,  setLoading]  = useState(false)
@@ -16,13 +17,31 @@ function ResetForm() {
   const [done,     setDone]     = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true)
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setReady(true)
-    })
-    return () => subscription.unsubscribe()
+    async function init() {
+      const token_hash = searchParams.get('token_hash')
+      const type       = searchParams.get('type') as any
+
+      if (token_hash && type) {
+        // Nuovo flusso: token nell'URL — scambia subito con verifyOtp
+        const { error } = await supabase.auth.verifyOtp({ token_hash, type })
+        if (error) {
+          setError('Il link è scaduto o non è valido. Richiedi un nuovo reset.')
+          setReady(false)
+        } else {
+          setReady(true)
+        }
+        return
+      }
+
+      // Vecchio flusso fallback: aspetta evento PASSWORD_RECOVERY
+      const { data } = await supabase.auth.getSession()
+      if (data.session) { setReady(true); return }
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'PASSWORD_RECOVERY') setReady(true)
+      })
+      return () => subscription.unsubscribe()
+    }
+    init()
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -45,9 +64,20 @@ function ResetForm() {
     transition: 'border-color .2s',
   }
 
-  if (!ready) return (
+  if (!ready && !error) return (
     <div style={{ minHeight: '100vh', background: '#07070d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ fontSize: '13px', color: '#5a5548', fontFamily: 'DM Mono, monospace' }}>Verifica del link in corso…</div>
+    </div>
+  )
+
+  if (!ready && error) return (
+    <div style={{ minHeight: '100vh', background: '#07070d', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: "'Outfit', sans-serif" }}>
+      <div style={{ fontSize: '40px', marginBottom: '20px' }}>⚠️</div>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '26px', fontWeight: 300, color: '#f0ebe0', marginBottom: '12px', textAlign: 'center' }}>Link non valido o scaduto</h2>
+      <p style={{ fontSize: '14px', color: '#5a5548', textAlign: 'center', marginBottom: '28px', maxWidth: '360px', lineHeight: 1.7 }}>{error}</p>
+      <Link href="/forgot-password" style={{ padding: '12px 28px', borderRadius: '8px', background: '#c8a45a', color: '#07070d', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}>
+        Richiedi un nuovo link
+      </Link>
     </div>
   )
 
