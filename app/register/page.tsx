@@ -98,7 +98,7 @@ function RegisterForm() {
 
       {/* Nav */}
       <nav style={{ padding: '16px clamp(20px,4vw,52px)', borderBottom: '1px solid rgba(255,255,255,.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <a href="https://www.scoreforge.it/landing" style={{ textDecoration: 'none' }}>
+        < <Link href="/home" style={{ textDecoration: 'none' }}>
           <svg width="110" height="24" viewBox="0 0 110 24">
             <path d="M16,2 Q22,1.5 22,7 Q22,12.5 16,12.5" fill="none" stroke="#e2c47e" strokeWidth="2.2" strokeLinecap="round"/>
             <path d="M10,12.5 Q4,12.5 4,17.5 Q4,22.5 10,22" fill="none" stroke="#c8a45a" strokeWidth="2.2" strokeLinecap="round"/>
